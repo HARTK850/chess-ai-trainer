@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>♟ מאמן שחמט AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://unpkg.com/chess.js@0.10.3/chess.js"></script>
+<style>
+:root{--bg-deep:#080c10;--bg-card:#0e1520;--bg-panel:#111a28;--bg-input:#0a1018;--gold:#c9a84c;--gold-light:#e8c96a;--gold-dim:#3a2e18;--cyan:#3dd6f5;--cyan-dim:#1a6878;--red:#e05555;--green:#4caf7d;--text-primary:#e8e4d8;--text-secondary:#8a9ab0;--text-dim:#4a5a70;--border:#1e2d42;--shadow:0 8px 40px rgba(0,0,0,.6)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg-deep);color:var(--text-primary);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(201,168,76,.04) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 80% 80%,rgba(61,214,245,.03) 0%,transparent 60%);pointer-events:none;z-index:0}
+header{display:flex;align-items:center;justify-content:space-between;padding:15px 26px;border-bottom:1px solid var(--border);background:rgba(14,21,32,.97);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+.logo{font-family:'Cinzel',serif;font-size:1.35rem;font-weight:800;background:linear-gradient(135deg,var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:8px}
+.logo-icon{-webkit-text-fill-color:initial;font-size:1.6rem}
+.header-controls{display:flex;gap:9px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 17px;border-radius:8px;border:none;font-family:'Outfit',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;transition:all .2s ease}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#a07830);color:#0e0a04;box-shadow:0 4px 14px rgba(201,168,76,.3)}
+.btn-gold:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(201,168,76,.45)}
+.btn-outline{background:transparent;color:var(--text-secondary);border:1px solid var(--border)}
+.btn-outline:hover{border-color:var(--gold-dim);color:var(--gold)}
+.btn-cyan{background:linear-gradient(135deg,var(--cyan-dim),#0d3d4a);color:var(--cyan);border:1px solid var(--cyan-dim)}
+.btn-cyan:hover{box-shadow:0 0 18px rgba(61,214,245,.2)}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px dashed var(--border);font-size:.78rem}
+.btn-ghost:hover{border-color:var(--gold-dim);color:var(--gold)}
+.btn-danger{background:rgba(224,85,85,.1);color:var(--red);border:1px solid rgba(224,85,85,.3)}
+.btn-danger:hover{background:rgba(224,85,85,.2)}
+.btn-sm{padding:6px 13px;font-size:.78rem}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+.app-container{display:grid;grid-template-columns:1fr 355px;min-height:calc(100vh - 58px);position:relative;z-index:1}
+.board-section{padding:22px 18px 22px 26px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.board-outer{display:flex;gap:0;position:relative}
+.chess-board{display:grid;grid-template-columns:repeat(8,1fr);border:3px solid #7a6030;border-radius:5px;overflow:hidden;box-shadow:0 0 0 1px #3a2e18,0 18px 55px rgba(0,0,0,.85),0 0 28px rgba(201,168,76,.18)}
+.sq{width:66px;height:66px;display:flex;align-items:center;justify-content:center;font-size:2.55rem;cursor:pointer;transition:background .12s;position:relative}
+.sq.light{background:#f0d9b5}
+.sq.dark{background:#b58863}
+.sq.selected{background:#f6f669!important;box-shadow:inset 0 0 0 3px #b8b400}
+.sq.hl-from{box-shadow:inset 0 0 0 4px rgba(255,210,0,.7)!important}
+.sq.hl-to{box-shadow:inset 0 0 0 4px rgba(255,210,0,1)!important}
+.sq.legal-move::after{content:'';width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.17);position:absolute;pointer-events:none}
+.sq.legal-capture::after{content:'';inset:3px;border-radius:4px;border:4px solid rgba(0,0,0,.2);position:absolute;pointer-events:none}
+.sq.check-sq{background:#ff3333!important}
+.piece{line-height:1;display:block;transition:transform .1s ease}
+.piece.w{color:#fff;text-shadow:0 0 3px #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 2px 4px rgba(0,0,0,.6)}
+.piece.b{color:#111;text-shadow:0 1px 3px rgba(255,255,255,.25),0 0 4px rgba(255,255,255,.1),0 2px 4px rgba(0,0,0,.5)}
+body.mode-3d .piece.w{text-shadow:0 0 3px #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,2px 5px 0 rgba(0,0,0,.45),3px 8px 10px rgba(0,0,0,.65)}
+body.mode-3d .piece.b{text-shadow:0 1px 0 rgba(255,255,255,.3),2px 5px 0 rgba(0,0,0,.55),3px 8px 12px rgba(0,0,0,.75)}
+body.mode-3d .sq:hover .piece{transform:translateY(-5px) scale(1.12)}
+.sq:not(.selected):hover .piece{transform:scale(1.07)}
+.board-coords-col{display:flex;flex-direction:column;justify-content:space-around;padding:0 4px}
+.coord-rank{font-size:.62rem;color:var(--text-dim);font-weight:600;height:66px;display:flex;align-items:center}
+.board-coords-row{display:flex;padding-right:4px}
+.coord-file{width:66px;text-align:center;font-size:.62rem;color:var(--text-dim);font-weight:600;padding-top:3px}
+.game-status-bar{display:flex;align-items:center;gap:11px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:11px 17px;width:100%;max-width:572px}
+.status-dot{width:10px;height:10px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);flex-shrink:0;animation:pg 2s infinite}
+.status-dot.thinking{background:var(--gold);box-shadow:0 0 7px var(--gold);animation:pg 1s infinite}
+.status-dot.ended{background:var(--red);box-shadow:0 0 7px var(--red);animation:none}
+@keyframes pg{0%,100%{opacity:1}50%{opacity:.45}}
+.status-text{font-size:.86rem;font-weight:500;flex:1}
+.turn-badge{padding:4px 11px;border-radius:20px;font-size:.72rem;font-weight:600;background:rgba(201,168,76,.1);color:var(--gold);border:1px solid var(--gold-dim)}
+.turn-badge.bt{background:rgba(255,255,255,.05);color:var(--text-secondary);border-color:var(--border)}
+.diff-ctrl{display:flex;align-items:center;gap:11px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 17px;width:100%;max-width:572px}
+.diff-label{font-size:.77rem;color:var(--text-secondary);white-space:nowrap;min-width:68px}
+.diff-slider{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--border);outline:none}
+.diff-slider::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 7px rgba(201,168,76,.5)}
+.diff-val{font-size:.84rem;font-weight:700;color:var(--gold);min-width:20px;text-align:center}
+.board-btns{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;width:100%;max-width:572px}
+.toggle-row{display:flex;align-items:center;gap:7px}
+.toggle-label{font-size:.78rem;color:var(--text-secondary)}
+.toggle-sw{width:38px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;transition:background .2s}
+.toggle-sw::after{content:'';width:14px;height:14px;border-radius:50%;background:var(--text-dim);position:absolute;top:3px;left:3px;transition:all .2s}
+.toggle-sw.on{background:rgba(201,168,76,.3)}
+.toggle-sw.on::after{left:21px;background:var(--gold);box-shadow:0 0 7px var(--gold)}
+.captured-row{display:flex;gap:1px;flex-wrap:wrap;font-size:1.05rem;min-height:20px}
+.score-diff{font-size:.71rem;color:var(--gold);font-weight:700;min-width:22px}
+.think-ov{display:none;position:absolute;inset:0;background:rgba(8,12,16,.55);border-radius:5px;align-items:center;justify-content:center;z-index:10;backdrop-filter:blur(2px)}
+.think-ov.on{display:flex}
+.spinner{width:42px;height:42px;border:3px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.side-panel{border-left:1px solid var(--border);background:var(--bg-panel);display:flex;flex-direction:column;height:calc(100vh - 58px);overflow:hidden;position:sticky;top:58px}
+.panel-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--bg-card);flex-shrink:0}
+.panel-tab{flex:1;padding:12px 5px;font-size:.72rem;font-weight:500;color:var(--text-dim);cursor:pointer;border:none;background:transparent;font-family:'Outfit',sans-serif;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.3px}
+.panel-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.panel-tab:hover:not(.active){color:var(--text-secondary)}
+.panel-content{flex:1;overflow-y:auto;padding:17px}
+.panel-content::-webkit-scrollbar{width:4px}
+.panel-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.sec-label{font-size:.66rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.4px;margin-bottom:7px}
+.divider{height:1px;background:var(--border);margin:13px 0}
+.api-key-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.api-key-input{flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text-primary);font-family:monospace;font-size:.72rem;outline:none;transition:border-color .2s}
+.api-key-input:focus{border-color:var(--gold-dim)}
+.api-key-input::placeholder{color:var(--text-dim)}
+.key-dot{width:8px;height:8px;border-radius:50%;background:var(--text-dim);flex-shrink:0;transition:all .3s}
+.key-dot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
+.key-dot.fail{background:var(--red);box-shadow:0 0 5px var(--red)}
+.key-dot.active{background:var(--gold);box-shadow:0 0 5px var(--gold);animation:pg 1s infinite}
+.mode-group{display:flex;gap:7px;margin-bottom:13px}
+.mode-card{flex:1;padding:12px 7px;border-radius:9px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;text-align:center;transition:all .2s;font-size:.74rem;color:var(--text-secondary)}
+.mode-card .mi{font-size:1.45rem;display:block;margin-bottom:4px}
+.mode-card.active{border-color:var(--gold-dim);background:rgba(201,168,76,.07);color:var(--gold)}
+.mode-card:hover:not(.active){border-color:#3a2e18}
+.analysis-box{background:var(--bg-input);border:1px solid var(--border);border-radius:9px;padding:13px;margin-bottom:11px;min-height:78px;position:relative;overflow:hidden}
+.analysis-box.loading::after{content:'';position:absolute;bottom:0;left:0;height:2px;width:40%;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+.analysis-text{font-size:.82rem;line-height:1.75;color:var(--text-secondary);white-space:pre-wrap}
+.analysis-ph{color:var(--text-dim);font-size:.77rem;font-style:italic;text-align:center;padding:9px 0}
+.moves-grid{display:grid;grid-template-columns:26px 1fr 1fr;gap:1px;font-size:.79rem}
+.move-num{color:var(--text-dim);padding:4px 0;font-size:.7rem;display:flex;align-items:center}
+.move-cell{padding:3px 6px;border-radius:4px;cursor:pointer;transition:background .12s;font-family:monospace}
+.move-cell:hover{background:var(--bg-input)}
+.move-cell.cur{background:rgba(201,168,76,.15);color:var(--gold)}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.stat-card{background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:11px;text-align:center}
+.stat-val{font-size:1.35rem;font-weight:700;color:var(--gold);display:block}
+.stat-lbl{font-size:.66rem;color:var(--text-dim);margin-top:2px}
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{padding:10px 17px;border-radius:9px;font-size:.82rem;font-weight:500;backdrop-filter:blur(12px);animation:toastIn .3s ease;max-width:340px;text-align:center}
+.toast-error{background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.4);color:#f08080}
+.toast-success{background:rgba(76,175,125,.15);border:1px solid rgba(76,175,125,.4);color:#7ed4aa}
+.toast-info{background:rgba(61,214,245,.1);border:1px solid rgba(61,214,245,.3);color:var(--cyan)}
+@keyframes toastIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;align-items:center;justify-content:center;padding:18px;backdrop-filter:blur(5px)}
+.modal-ov.on{display:flex}
+.modal{background:var(--bg-card);border:1px solid var(--border);border-radius:15px;padding:24px;max-width:630px;width:100%;max-height:82vh;overflow-y:auto;box-shadow:var(--shadow);position:relative}
+.modal-title{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:600;color:var(--gold);margin-bottom:17px}
+.modal-close{position:absolute;top:17px;left:17px;background:none;border:none;color:var(--text-dim);font-size:1.35rem;cursor:pointer;line-height:1}
+.modal-close:hover{color:var(--text-primary)}
+.modal-body{font-size:.86rem;line-height:1.8;color:var(--text-secondary);white-space:pre-wrap}
+.modal-loading{display:flex;align-items:center;justify-content:center;gap:11px;padding:34px 0;color:var(--text-dim);font-size:.86rem}
+@media(max-width:900px){.app-container{grid-template-columns:1fr}.side-panel{position:static;height:auto;max-height:400px;border-left:none;border-top:1px solid var(--border)}.sq{width:52px;height:52px;font-size:2rem}.coord-rank{height:52px}.coord-file{width:52px}}
+@media(max-width:500px){.sq{width:40px;height:40px;font-size:1.6rem}.coord-rank{height:40px}.coord-file{width:40px}header{padding:11px 13px}.logo{font-size:.95rem}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="logo-icon">♟</span>מאמן שחמט AI</div>
+  <div class="header-controls">
+    <button class="btn btn-outline btn-sm" onclick="confirmNewGame()">⟳ משחק חדש</button>
+    <button class="btn btn-gold btn-sm" onclick="openFullAnalysis()">📊 נתח משחק</button>
+  </div>
+</header>
+
+<div class="app-container">
+  <section class="board-section">
+    <div style="width:100%;max-width:572px;display:flex;align-items:center;gap:7px;min-height:24px">
+      <span class="score-diff" id="sBlack"></span>
+      <div class="captured-row" id="capBlack"></div>
+    </div>
+    <div style="position:relative">
+      <div class="board-outer">
+        <div class="board-coords-col" id="rankLabels"></div>
+        <div>
+          <div id="chessBoard" class="chess-board"></div>
+          <div class="board-coords-row" id="fileLabels"></div>
+        </div>
+      </div>
+      <div class="think-ov" id="thinkOv"><div class="spinner"></div></div>
+    </div>
+    <div style="width:100%;max-width:572px;display:flex;align-items:center;gap:7px;min-height:24px">
+      <span class="score-diff" id="sWhite"></span>
+      <div class="captured-row" id="capWhite"></div>
+    </div>
+    <div class="game-status-bar">
+      <div class="status-dot" id="statusDot"></div>
+      <div class="status-text" id="statusText">לחץ "התחל משחק" כדי להתחיל</div>
+      <div class="turn-badge" id="turnBadge">♙ לבן</div>
+    </div>
+    <div class="diff-ctrl">
+      <span class="diff-label">רמת קושי</span>
+      <input type="range" class="diff-slider" id="diffSlider" min="1" max="20" value="5"
+        oninput="document.getElementById('diffVal').textContent=this.value">
+      <span class="diff-val" id="diffVal">5</span>
+    </div>
+    <div class="board-btns">
+      <button class="btn btn-outline btn-sm" onclick="flipBoard()">↕ הפוך לוח</button>
+      <div class="toggle-row">
+        <span class="toggle-label">תלת-מימד</span>
+        <div class="toggle-sw" id="toggle3d" onclick="toggle3D()"></div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="side-panel">
+    <div class="panel-tabs">
+      <button class="panel-tab active" onclick="switchTab('setup')">⚙ הגדרות</button>
+      <button class="panel-tab" onclick="switchTab('analysis')">🧠 ניתוח</button>
+      <button class="panel-tab" onclick="switchTab('history')">📋 מהלכים</button>
+      <button class="panel-tab" onclick="switchTab('stats')">📈 סטטיסטיקה</button>
+    </div>
+    <div class="panel-content">
+
+      <div class="tab-pane active" id="tab-setup">
+        <div class="sec-label">סוג משחק</div>
+        <div class="mode-group">
+          <div class="mode-card active" id="mNormal" onclick="setMode('normal')">
+            <span class="mi">♟</span><strong>רגיל</strong><br>
+            <span style="font-size:.67rem;opacity:.7">vs מנוע AI</span>
+          </div>
+          <div class="mode-card" id="mAI" onclick="setMode('ai')">
+            <span class="mi">🤖</span><strong>עם Gemini</strong><br>
+            <span style="font-size:.67rem;opacity:.7">ניתוח בזמן אמת</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="sec-label">מפתחות Gemini API <span style="font-size:.59rem;color:var(--green);text-transform:none;letter-spacing:0">(נשמרים בדפדפן)</span></div>
+        <div id="keysList"></div>
+        <div style="margin-top:6px"><button class="btn btn-ghost btn-sm" onclick="addKeyRow()">+ הוסף מפתח</button></div>
+        <div class="divider"></div>
+        <div class="sec-label">צבע שחקן</div>
+        <div style="display:flex;gap:7px;margin-bottom:13px">
+          <button class="btn btn-outline btn-sm" id="cWhite" onclick="setColor('w')" style="flex:1">♙ לבן</button>
+          <button class="btn btn-outline btn-sm" id="cBlack" onclick="setColor('b')" style="flex:1">♟ שחור</button>
+        </div>
+        <button class="btn btn-gold" style="width:100%" onclick="startNewGame()">▶ התחל משחק</button>
+      </div>
+
+      <div class="tab-pane" id="tab-analysis">
+        <div class="sec-label">ניתוח מהלך אחרון</div>
+        <div class="analysis-box" id="moveAnalBox"><div class="analysis-ph">בצע מהלך כדי לראות ניתוח...</div></div>
+        <div class="sec-label">הערכת מנוע</div>
+        <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:11px;margin-bottom:11px">
+          <div style="font-size:.73rem;color:var(--text-dim);margin-bottom:3px">עמדה נוכחית</div>
+          <div id="evalScore" style="font-family:monospace;font-size:1.22rem;font-weight:700;color:var(--gold)">—</div>
+          <div id="bestMove" style="font-size:.74rem;color:var(--text-dim);margin-top:3px">מהלך מומלץ: —</div>
+        </div>
+        <button class="btn btn-cyan" style="width:100%" onclick="analyzeCurrentPos()">🧠 נתח עמדה עכשיו</button>
+      </div>
+
+      <div class="tab-pane" id="tab-history">
+        <div class="sec-label">היסטוריית מהלכים</div>
+        <div class="moves-grid" id="movesGrid">
+          <div style="grid-column:1/-1;text-align:center;color:var(--text-dim);font-size:.77rem;padding:18px 0">המשחק טרם התחיל...</div>
+        </div>
+      </div>
+
+      <div class="tab-pane" id="tab-stats">
+        <div class="sec-label">סטטיסטיקות <span style="font-size:.59rem;color:var(--green);text-transform:none;letter-spacing:0">(נשמרות בדפדפן)</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><span class="stat-val" id="st-wins">0</span><div class="stat-lbl">🏆 ניצחונות</div></div>
+          <div class="stat-card"><span class="stat-val" id="st-losses">0</span><div class="stat-lbl">💀 הפסדים</div></div>
+          <div class="stat-card"><span class="stat-val" id="st-draws">0</span><div class="stat-lbl">🤝 תיקו</div></div>
+          <div class="stat-card"><span class="stat-val" id="st-games">0</span><div class="stat-lbl">🎮 משחקים</div></div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><span class="stat-val" id="st-moves">0</span><div class="stat-lbl">♟ מהלכים כולל</div></div>
+          <div class="stat-card"><span class="stat-val" id="st-streak">0</span><div class="stat-lbl">🔥 רצף ניצחונות</div></div>
+        </div>
+        <div class="divider"></div>
+        <button class="btn btn-danger btn-sm" style="width:100%" onclick="resetStats()">🗑 אפס סטטיסטיקה</button>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<div class="modal-ov" id="analysisModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">📊 ניתוח מלא של המשחק</div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ═══════════ PIECES ═══════════
+const GLYPHS={wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'};
+const FILES=['a','b','c','d','e','f','g','h'];
+
+// ═══════════ STATE ═══════════
+let game=new Chess();
+let gameMode='normal',playerColor='w',flipped=false,is3D=false;
+let gameStarted=false,autoAnalyze=false;
+let selectedSq=null,legalMoves=[];
+let lastFrom=null,lastTo=null;
+let sfReady=false,sfWorker=null;
+let apiKeys=[]; // [{key,status}]
+let currentKeyIdx=0;
+let stats={wins:0,losses:0,draws:0,games:0,totalMoves:0,streak:0};
+
+// ═══════════ LOCAL STORAGE ═══════════
+const LS_KEYS='chessAI_keys2';
+const LS_STATS='chessAI_stats2';
+const LS_PREFS='chessAI_prefs2';
+
+function saveLS(){
+  try{
+    const ks=apiKeys.filter(k=>k&&k.key).map(k=>k.key);
+    localStorage.setItem(LS_KEYS,JSON.stringify(ks));
+    localStorage.setItem(LS_STATS,JSON.stringify(stats));
+    localStorage.setItem(LS_PREFS,JSON.stringify({gameMode,playerColor,difficulty:document.getElementById('diffSlider').value,is3D}));
+  }catch(e){}
+}
+
+function loadLS(){
+  try{
+    const ks=JSON.parse(localStorage.getItem(LS_KEYS)||'[]');
+    ks.forEach(k=>{if(k)addKeyRow(k);});
+    const s=JSON.parse(localStorage.getItem(LS_STATS)||'null');
+    if(s)stats={...stats,...s};
+    const p=JSON.parse(localStorage.getItem(LS_PREFS)||'null');
+    if(p){
+      if(p.gameMode)setMode(p.gameMode);
+      if(p.playerColor)setColor(p.playerColor);
+      if(p.difficulty){document.getElementById('diffSlider').value=p.difficulty;document.getElementById('diffVal').textContent=p.difficulty;}
+      if(p.is3D){is3D=true;document.body.classList.add('mode-3d');document.getElementById('toggle3d').classList.add('on');}
+    }
+  }catch(e){}
+  if(apiKeys.length===0)addKeyRow();
+  updateStatsUI();
+}
+
+// ═══════════ INIT ═══════════
+document.addEventListener('DOMContentLoaded',()=>{
+  buildBoard();
+  buildCoords();
+  renderBoard();
+  initEngine();
+  loadLS();
+  updateColorButtons();
+  updateStatus();
+  document.getElementById('analysisModal').addEventListener('click',e=>{
+    if(e.target===document.getElementById('analysisModal'))closeModal();
+  });
+});
+
+// ═══════════ BOARD BUILD ═══════════
+function sqAlg(row,col){
+  if(!flipped) return FILES[col]+(8-row);
+  return FILES[7-col]+(row+1);
+}
+
+function buildBoard(){
+  const el=document.getElementById('chessBoard');
+  el.innerHTML='';
+  for(let r=0;r<8;r++){
+    for(let f=0;f<8;f++){
+      const sq=document.createElement('div');
+      sq.className='sq '+((r+f)%2===0?'light':'dark');
+      sq.id='sq_'+sqAlg(r,f);
+      sq.addEventListener('click',()=>onSqClick(sqAlg(r,f)));
+      el.appendChild(sq);
+    }
+  }
+}
+
+function buildCoords(){
+  const rc=document.getElementById('rankLabels');
+  const fc=document.getElementById('fileLabels');
+  rc.innerHTML=''; fc.innerHTML='';
+  const ranks=flipped?[1,2,3,4,5,6,7,8]:[8,7,6,5,4,3,2,1];
+  ranks.forEach(r=>{const d=document.createElement('div');d.className='coord-rank';d.textContent=r;rc.appendChild(d);});
+  const fls=flipped?['h','g','f','e','d','c','b','a']:['a','b','c','d','e','f','g','h'];
+  fls.forEach(f=>{const d=document.createElement('div');d.className='coord-file';d.textContent=f;fc.appendChild(d);});
+}
+
+function renderBoard(){
+  const pos=game.board();
+  clearHL();
+  for(let r=0;r<8;r++){
+    for(let f=0;f<8;f++){
+      const id=sqAlg(r,f);
+      const el=document.getElementById('sq_'+id);
+      if(!el)continue;
+      const fi=id.charCodeAt(0)-97;
+      const rk=parseInt(id[1])-1;
+      const piece=pos[7-rk][fi];
+      el.innerHTML='';
+      if(piece){
+        const key=piece.color+piece.type.toUpperCase();
+        const sp=document.createElement('span');
+        sp.className='piece '+piece.color;
+        sp.textContent=GLYPHS[key]||'?';
+        el.appendChild(sp);
+      }
+    }
+  }
+  // check highlight
+  if(game.in_check()){
+    const ksq=findKing(game.turn());
+    if(ksq)document.getElementById('sq_'+ksq)?.classList.add('check-sq');
+  }
+  if(lastFrom)document.getElementById('sq_'+lastFrom)?.classList.add('hl-from');
+  if(lastTo)document.getElementById('sq_'+lastTo)?.classList.add('hl-to');
+}
+
+function clearHL(){
+  document.querySelectorAll('.sq').forEach(s=>s.classList.remove('selected','hl-from','hl-to','legal-move','legal-capture','check-sq'));
+}
+
+function findKing(color){
+  const pos=game.board();
+  for(let r=0;r<8;r++)for(let f=0;f<8;f++)
+    if(pos[r][f]&&pos[r][f].type==='k'&&pos[r][f].color===color)return FILES[f]+(r+1);
+  return null;
+}
+
+function flipBoard(){
+  flipped=!flipped;
+  buildBoard();buildCoords();renderBoard();
+  if(selectedSq)showLegal(selectedSq);
+}
+
+// ═══════════ CLICK HANDLING ═══════════
+function onSqClick(sq){
+  if(!gameStarted||game.game_over())return;
+  if(game.turn()!==playerColor)return;
+  if(selectedSq){
+    if(legalMoves.includes(sq)){doMove(selectedSq,sq);selectedSq=null;legalMoves=[];return;}
+    clearHL();
+    if(lastFrom)document.getElementById('sq_'+lastFrom)?.classList.add('hl-from');
+    if(lastTo)document.getElementById('sq_'+lastTo)?.classList.add('hl-to');
+    selectedSq=null;legalMoves=[];
+  }
+  const pos=game.board();
+  const fi=sq.charCodeAt(0)-97;
+  const rk=parseInt(sq[1])-1;
+  const piece=pos[7-rk][fi];
+  if(!piece||piece.color!==playerColor)return;
+  selectedSq=sq;
+  document.getElementById('sq_'+sq)?.classList.add('selected');
+  showLegal(sq);
+}
+
+function showLegal(sq){
+  const mvs=game.moves({square:sq,verbose:true});
+  legalMoves=mvs.map(m=>m.to);
+  mvs.forEach(m=>{
+    const el=document.getElementById('sq_'+m.to);
+    if(!el)return;
+    el.classList.add(m.captured?'legal-capture':'legal-move');
+  });
+}
+
+function doMove(from,to){
+  const mv=game.move({from,to,promotion:'q'});
+  if(!mv)return;
+  lastFrom=from;lastTo=to;
+  renderBoard();
+  updateMoveHistory();
+  updateStatus();
+  updateCaptured();
+  stats.totalMoves++;
+  saveLS();
+  if(autoAnalyze&&getActiveKeys().length>0){switchTab('analysis');analyzeLastMove();}
+  if(!game.game_over())setTimeout(engineMove,350);
+  else recordResult();
+}
+
+// ═══════════ STATUS ═══════════
+function updateStatus(){
+  const dot=document.getElementById('statusDot');
+  const txt=document.getElementById('statusText');
+  const bdg=document.getElementById('turnBadge');
+  if(!gameStarted){
+    txt.textContent='לחץ "התחל משחק" כדי להתחיל';
+    dot.className='status-dot ended';bdg.textContent='♙ לבן';bdg.className='turn-badge';return;
+  }
+  if(game.in_checkmate()){
+    const w=game.turn()==='w'?'שחור':'לבן';
+    txt.textContent='♚ שח-מט! '+w+' ניצח';dot.className='status-dot ended';bdg.textContent='🏆';bdg.className='turn-badge';
+  }else if(game.in_draw()){
+    txt.textContent='🤝 תיקו!';dot.className='status-dot ended';bdg.textContent='½-½';bdg.className='turn-badge';
+  }else if(game.in_check()){
+    const t=game.turn()==='w'?'לבן':'שחור';
+    txt.textContent='⚡ שח! תורו של '+t;dot.className='status-dot thinking';
+    bdg.textContent=game.turn()==='w'?'♙ לבן':'♟ שחור';
+    bdg.className='turn-badge'+(game.turn()==='b'?' bt':'');
+  }else{
+    const t=game.turn()==='w'?'לבן':'שחור';
+    txt.textContent='תורו של '+t;dot.className='status-dot';
+    bdg.textContent=game.turn()==='w'?'♙ לבן':'♟ שחור';
+    bdg.className='turn-badge'+(game.turn()==='b'?' bt':'');
+  }
+}
+
+// ═══════════ CAPTURED ═══════════
+const PV={p:1,n:3,b:3,r:5,q:9,k:0};
+const PU={wP:'♙',wN:'♘',wB:'♗',wR:'♖',wQ:'♕',bP:'♟',bN:'♞',bB:'♝',bR:'♜',bQ:'♛'};
+function updateCaptured(){
+  const hist=game.history({verbose:true});
+  const cW=[],cB=[];let sW=0,sB=0;
+  hist.forEach(m=>{
+    if(m.captured){
+      if(m.color==='w'){cW.push('b'+m.captured.toUpperCase());sW+=PV[m.captured];}
+      else{cB.push('w'+m.captured.toUpperCase());sB+=PV[m.captured];}
+    }
+  });
+  document.getElementById('capWhite').innerHTML=cW.map(p=>'<span>'+( PU[p]||'?')+'</span>').join('');
+  document.getElementById('capBlack').innerHTML=cB.map(p=>'<span>'+(PU[p]||'?')+'</span>').join('');
+  const diff=sW-sB;
+  document.getElementById('sWhite').textContent=diff>0?'+'+diff:'';
+  document.getElementById('sBlack').textContent=diff<0?'+'+Math.abs(diff):'';
+}
+
+// ═══════════ MOVE HISTORY ═══════════
+function updateMoveHistory(){
+  const hist=game.history();
+  const grid=document.getElementById('movesGrid');
+  if(!hist.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);font-size:.77rem;padding:18px 0">המשחק טרם התחיל...</div>';return;
+  }
+  let html='';
+  for(let i=0;i<hist.length;i+=2){
+    const num=Math.floor(i/2)+1;
+    const w=hist[i],b=hist[i+1]||'';
+    const wc=i===hist.length-1?'move-cell cur':'move-cell';
+    const bc=i+1===hist.length-1?'move-cell cur':'move-cell';
+    html+='<span class="move-num">'+num+'.</span><span class="'+wc+'">'+w+'</span><span class="'+(b?bc:'move-cell')+'">'+b+'</span>';
+  }
+  grid.innerHTML=html;
+  grid.parentElement.scrollTop=99999;
+}
+
+// ═══════════ GAME CONTROL ═══════════
+function setMode(m){
+  gameMode=m;autoAnalyze=m==='ai';
+  document.getElementById('mNormal').classList.toggle('active',m==='normal');
+  document.getElementById('mAI').classList.toggle('active',m==='ai');
+  if(m==='ai'&&getActiveKeys().length===0)showToast('הוסף מפתח Gemini API כדי לשחק במצב ניתוח','info');
+  saveLS();
+}
+
+function setColor(c){playerColor=c;updateColorButtons();saveLS();}
+
+function updateColorButtons(){
+  ['w','b'].forEach(c=>{
+    const el=document.getElementById(c==='w'?'cWhite':'cBlack');
+    el.style.borderColor=playerColor===c?'var(--gold)':'';
+    el.style.color=playerColor===c?'var(--gold)':'';
+  });
+}
+
+function startNewGame(){
+  game.reset();
+  lastFrom=null;lastTo=null;selectedSq=null;legalMoves=[];
+  gameStarted=true;currentKeyIdx=0;
+  flipped=playerColor==='b';
+  buildBoard();buildCoords();renderBoard();
+  updateMoveHistory();updateStatus();updateCaptured();
+  clearAnalysisBox();
+  document.getElementById('evalScore').textContent='—';
+  document.getElementById('bestMove').textContent='מהלך מומלץ: —';
+  showToast('משחק חדש התחיל! 🎮','success');
+  if(playerColor==='b')setTimeout(engineMove,600);
+  if(sfReady){
+    setTimeout(()=>{sfWorker.postMessage('position startpos');sfWorker.postMessage('go depth 12');},700);
+  }
+}
+
+function confirmNewGame(){
+  if(gameStarted&&!game.game_over()&&game.history().length>0){
+    if(!confirm('האם להתחיל משחק חדש? ההתקדמות תאבד.'))return;
+  }
+  startNewGame();
+}
+
+function recordResult(){
+  if(game.in_checkmate()){
+    if(game.turn()!==playerColor){stats.wins++;stats.streak++;showToast('🏆 ניצחת! כל הכבוד!','success');}
+    else{stats.losses++;stats.streak=0;showToast('💀 הפסדת. נסה שוב!','error');}
+  }else if(game.in_draw()){stats.draws++;stats.streak=0;showToast('🤝 תיקו!','info');}
+  stats.games++;saveLS();updateStatsUI();
+}
+
+// ═══════════ STATS ═══════════
+function updateStatsUI(){
+  document.getElementById('st-wins').textContent=stats.wins;
+  document.getElementById('st-losses').textContent=stats.losses;
+  document.getElementById('st-draws').textContent=stats.draws;
+  document.getElementById('st-games').textContent=stats.games;
+  document.getElementById('st-moves').textContent=stats.totalMoves;
+  document.getElementById('st-streak').textContent=stats.streak;
+}
+
+function resetStats(){
+  if(!confirm('האם לאפס את כל הסטטיסטיקה?'))return;
+  stats={wins:0,losses:0,draws:0,games:0,totalMoves:0,streak:0};
+  saveLS();updateStatsUI();showToast('הסטטיסטיקה אופסה','info');
+}
+
+// ═══════════ ENGINE (minimax + optional Stockfish) ═══════════
+const PVALS={p:100,n:320,b:330,r:500,q:900,k:20000};
+
+function evalBoard(){
+  let s=0;
+  game.board().forEach(row=>row.forEach(p=>{
+    if(!p)return;
+    s+=p.color==='w'?PVALS[p.type]:-PVALS[p.type];
+  }));
+  return s;
+}
+
+function minimax(depth,alpha,beta,isMax){
+  if(depth===0||game.game_over())return evalBoard();
+  const mvs=game.moves();
+  if(isMax){
+    let best=-Infinity;
+    for(const m of mvs){game.move(m);const v=minimax(depth-1,alpha,beta,false);game.undo();best=Math.max(best,v);alpha=Math.max(alpha,v);if(beta<=alpha)break;}
+    return best;
+  }else{
+    let best=Infinity;
+    for(const m of mvs){game.move(m);const v=minimax(depth-1,alpha,beta,true);game.undo();best=Math.min(best,v);beta=Math.min(beta,v);if(beta<=alpha)break;}
+    return best;
+  }
+}
+
+function getBestMove(){
+  const mvs=game.moves({verbose:true});
+  if(!mvs.length)return null;
+  const diff=parseInt(document.getElementById('diffSlider').value);
+  const depth=diff<=4?1:diff<=8?2:diff<=14?3:4;
+  let best=null,bestVal=game.turn()==='w'?-Infinity:Infinity;
+  for(const m of mvs){
+    game.move(m);
+    const v=minimax(depth-1,-Infinity,Infinity,game.turn()==='w');
+    game.undo();
+    if(game.turn()==='w'&&v>bestVal){bestVal=v;best=m;}
+    if(game.turn()==='b'&&v<bestVal){bestVal=v;best=m;}
+  }
+  // Add randomness for lower difficulties
+  if(diff<=6&&Math.random()<0.35){return mvs[Math.floor(Math.random()*mvs.length)];}
+  return best||mvs[0];
+}
+
+function initEngine(){
+  // Try Stockfish via blob worker to avoid CORS on null origin
+  try{
+    const blobCode=`
+      var Module;
+      function onmessage(e){postMessage(e.data);}
+      importScripts('https://cdn.jsdelivr.net/npm/stockfish@16.0.0/src/stockfish.js');
+    `;
+    // We'll use our minimax as primary since Stockfish CDN blocks null origin
+    sfReady=true;
+    sfWorker={postMessage:handleEngineCmd};
+    console.log('Using built-in minimax engine');
+  }catch(e){
+    sfReady=true;
+    sfWorker={postMessage:handleEngineCmd};
+  }
+}
+
+function handleEngineCmd(msg){
+  if(typeof msg!=='string')return;
+  if(msg.startsWith('go')){
+    if(game.game_over()||game.turn()===playerColor){hideThink();return;}
+    const best=getBestMove();
+    if(best){
+      setTimeout(()=>{
+        const m=game.move({from:best.from,to:best.to,promotion:best.promotion||'q'});
+        if(m){
+          lastFrom=best.from;lastTo=best.to;
+          renderBoard();updateMoveHistory();updateStatus();updateCaptured();
+          stats.totalMoves++;saveLS();
+          // update eval display
+          const sc=evalBoard();
+          document.getElementById('evalScore').textContent=sc>0?'+'+(sc/100).toFixed(2):(sc/100).toFixed(2);
+          hideThink();
+          if(autoAnalyze&&getActiveKeys().length>0)analyzeLastMove();
+          if(game.game_over())recordResult();
+        }else{hideThink();}
+      },50);
+    }else{hideThink();}
+  }
+}
+
+function engineMove(){
+  if(!sfReady||game.game_over())return;
+  showThink();
+  sfWorker.postMessage('go depth '+document.getElementById('diffSlider').value);
+}
+
+function showThink(){document.getElementById('thinkOv').classList.add('on');document.getElementById('statusDot').classList.add('thinking');}
+function hideThink(){document.getElementById('thinkOv').classList.remove('on');document.getElementById('statusDot').classList.remove('thinking');}
+
+// ═══════════ API KEYS ═══════════
+function addKeyRow(existingKey){
+  const val=existingKey||'';
+  const idx=apiKeys.length;
+  apiKeys.push({key:val,status:'idle'});
+  const row=document.createElement('div');
+  row.className='api-key-row';row.id='kr_'+idx;
+  row.innerHTML='<div class="key-dot" id="kd_'+idx+'"></div>'
+    +'<input type="password" class="api-key-input" id="ki_'+idx+'" placeholder="AIzaSy..." '
+    +'oninput="updateKey('+idx+',this.value)" value="'+val+'">'
+    +'<button class="btn btn-danger btn-sm" onclick="removeKey('+idx+')" style="padding:5px 10px;flex-shrink:0">✕</button>';
+  document.getElementById('keysList').appendChild(row);
+}
+
+function updateKey(idx,val){
+  if(apiKeys[idx]){apiKeys[idx].key=val.trim();apiKeys[idx].status='idle';document.getElementById('kd_'+idx).className='key-dot';saveLS();}
+}
+
+function removeKey(idx){
+  document.getElementById('kr_'+idx)?.remove();
+  if(apiKeys[idx])apiKeys[idx]=null;
+  saveLS();
+}
+
+function getActiveKeys(){return apiKeys.filter(k=>k&&k.key&&k.status!=='fail');}
+
+// ═══════════ GEMINI ═══════════
+const GM='gemini-3.1-flash-lite-preview';
+const GURL=k=>'https://generativelanguage.googleapis.com/v1beta/models/'+GM+':generateContent?key='+k;
+
+async function callGemini(prompt,retries){
+  retries=retries||0;
+  const keys=getActiveKeys();
+  if(!keys.length)throw new Error('אין מפתחות API זמינים. הוסף מפתח Gemini בהגדרות.');
+  if(currentKeyIdx>=keys.length)currentKeyIdx=0;
+  const kObj=keys[currentKeyIdx];
+  const gIdx=apiKeys.findIndex(k=>k&&k.key===kObj.key);
+  document.querySelectorAll('.key-dot').forEach(d=>d.classList.remove('active'));
+  if(gIdx>=0)document.getElementById('kd_'+gIdx)?.classList.add('active');
+  try{
+    const res=await fetch(GURL(kObj.key),{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:900}})
+    });
+    if(!res.ok){
+      const err=await res.json().catch(()=>({}));
+      if(res.status===429||res.status===403){
+        if(gIdx>=0){apiKeys[gIdx].status='fail';document.getElementById('kd_'+gIdx).className='key-dot fail';}
+        currentKeyIdx++;
+        if(retries<keys.length)return callGemini(prompt,retries+1);
+        throw new Error('כל המפתחות הגיעו למגבלת שימוש.');
+      }
+      throw new Error((err.error&&err.error.message)||'שגיאה '+res.status);
+    }
+    const data=await res.json();
+    const text=data.candidates&&data.candidates[0]&&data.candidates[0].content&&data.candidates[0].content.parts&&data.candidates[0].content.parts[0]&&data.candidates[0].content.parts[0].text;
+    if(!text)throw new Error('תגובה ריקה מ-Gemini');
+    if(gIdx>=0){apiKeys[gIdx].status='ok';document.getElementById('kd_'+gIdx).className='key-dot ok';}
+    saveLS();return text;
+  }catch(e){
+    if(gIdx>=0&&apiKeys[gIdx]&&apiKeys[gIdx].status!=='ok'){apiKeys[gIdx].status='fail';const el=document.getElementById('kd_'+gIdx);if(el)el.className='key-dot fail';}
+    throw e;
+  }
+}
+
+async function analyzeLastMove(){
+  const box=document.getElementById('moveAnalBox');
+  box.classList.add('loading');box.innerHTML='<div class="analysis-ph">Gemini מנתח את המהלך...</div>';
+  switchTab('analysis');
+  const hist=game.history();
+  const last=hist[hist.length-1]||'—';
+  const prompt='אתה מאמן שחמט מקצועי. נתח את המהלך האחרון בקצרה.\n\nFEN: '+game.fen()+'\nPGN: '+game.pgn()+'\nמהלך אחרון: '+last+'\n\nספק:\n1. הערכה קצרה (טוב/בינוני/חלש ולמה)\n2. הרעיון האסטרטגי\n3. אלטרנטיבה טובה יותר אם קיימת\n\nענה בעברית, 3-4 משפטים בלבד.';
+  try{const r=await callGemini(prompt);box.innerHTML='<div class="analysis-text">'+r+'</div>';}
+  catch(e){box.innerHTML='<div class="analysis-ph" style="color:var(--red)">'+e.message+'</div>';showToast(e.message,'error');}
+  finally{box.classList.remove('loading');}
+}
+
+async function analyzeCurrentPos(){
+  if(!gameStarted)return showToast('התחל משחק תחילה','info');
+  if(!getActiveKeys().length){showToast('הוסף מפתח Gemini API','error');switchTab('setup');return;}
+  await analyzeLastMove();
+}
+
+async function openFullAnalysis(){
+  if(!gameStarted||!game.history().length)return showToast('אין מהלכים לניתוח','info');
+  if(!getActiveKeys().length){showToast('הוסף מפתח Gemini API','error');switchTab('setup');return;}
+  document.getElementById('analysisModal').classList.add('on');
+  document.getElementById('modalBody').innerHTML='<div class="modal-loading"><div class="spinner" style="width:30px;height:30px;border-width:2px"></div>Gemini מנתח את המשחק...</div>';
+  const prompt='אתה מאמן שחמט מקצועי. נתח את המשחק הבא לעומק.\n\nPGN: '+game.pgn()+'\nFEN סופי: '+game.fen()+'\n\nספק:\n1. סיכום כללי\n2. שלב הפתיחה של שני הצדדים\n3. האמצע - מהלכים חזקים ושגיאות מרכזיות\n4. הסיום - איך הסתיים?\n5. 3 עצות לשיפור ללבן\n6. 3 עצות לשיפור לשחור\n\nענה בעברית, בצורה מסודרת וברורה.';
+  try{const r=await callGemini(prompt);document.getElementById('modalBody').innerHTML='<div class="modal-body">'+r+'</div>';}
+  catch(e){document.getElementById('modalBody').innerHTML='<div class="modal-body" style="color:var(--red)">'+e.message+'</div>';}
+}
+
+function closeModal(){document.getElementById('analysisModal').classList.remove('on');}
+function clearAnalysisBox(){document.getElementById('moveAnalBox').innerHTML='<div class="analysis-ph">בצע מהלך כדי לראות ניתוח...</div>';}
+
+// ═══════════ 3D TOGGLE ═══════════
+function toggle3D(){
+  is3D=!is3D;
+  document.body.classList.toggle('mode-3d',is3D);
+  document.getElementById('toggle3d').classList.toggle('on',is3D);
+  showToast(is3D?'🎲 תלת-מימד הופעל':'תלת-מימד כובה','info');
+  saveLS();
+}
+
+// ═══════════ TABS ═══════════
+const TABS=['setup','analysis','history','stats'];
+function switchTab(name){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.panel-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('.panel-tab')[TABS.indexOf(name)].classList.add('active');
+}
+
+// ═══════════ TOASTS ═══════════
+function showToast(msg,type){
+  type=type||'info';
+  const w=document.getElementById('toastWrap');
+  const t=document.createElement('div');
+  t.className='toast toast-'+type;t.textContent=msg;w.appendChild(t);
+  setTimeout(()=>{t.style.cssText='opacity:0;transform:translateY(18px);transition:all .3s ease';setTimeout(()=>t.remove(),300);},3000);
+}
+</script>
+</body>
+</html>

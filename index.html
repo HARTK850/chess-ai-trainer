@@ -389,12 +389,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:10p
 //  PIECE SETS
 // ════════════════════════════════════════
 const PIECE_SETS = {
-  classic:  {name:'קלאסי',   wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙', bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'},
-  filled:   {name:'מלא',     wK:'♚',wQ:'♛',wR:'♜',wB:'♝',wN:'♞',wP:'♟', bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'},
-  letters:  {name:'אותיות',  wK:'K', wQ:'Q',wR:'R',wB:'B',wN:'N',wP:'P',  bK:'K', bQ:'Q',bR:'R',bB:'B',bN:'N',bP:'P'},
-  arabic:   {name:'ערבית',   wK:'ملك',wQ:'وزيرة',wR:'رخ',wB:'فيل',wN:'حصان',wP:'جندي', bK:'ملك',bQ:'وزيرة',bR:'رخ',bB:'فيل',bN:'حصان',bP:'جندي'},
-  emoji:    {name:'אמוג\'י', wK:'👑',wQ:'🌟',wR:'🏰',wB:'⛪',wN:'🐴',wP:'⚔️', bK:'💀',bQ:'🌑',bR:'🗼',bB:'🦇',bN:'🐎',bP:'🗡️'},
-  dots:     {name:'נקודות',  wK:'⬤',wQ:'⬤',wR:'⬤',wB:'⬤',wN:'⬤',wP:'•',  bK:'⬤',bQ:'⬤',bR:'⬤',bB:'⬤',bN:'⬤',bP:'•'},
+  classic:  {name:'קלאסי',    wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙', bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'},
+  filled:   {name:'מלא',      wK:'♚',wQ:'♛',wR:'♜',wB:'♝',wN:'♞',wP:'♟', bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'},
+  bold:     {name:'עבה',      wK:'🜲',wQ:'🜲',wR:'🜲',wB:'🜲',wN:'🜲',wP:'🜲', bK:'🜲',bQ:'🜲',bR:'🜲',bB:'🜲',bN:'🜲',bP:'🜲'},
+  modern:   {name:'מודרני',   wK:'⊕',wQ:'◈',wR:'▣',wB:'◇',wN:'◉',wP:'●',  bK:'⊕',bQ:'◈',bR:'▣',bB:'◇',bN:'◉',bP:'●'},
+  round:    {name:'עגול',     wK:'⬟',wQ:'⬡',wR:'⬢',wB:'⬠',wN:'⬟',wP:'⬤',  bK:'⬟',bQ:'⬡',bR:'⬢',bB:'⬠',bN:'⬟',bP:'⬤'},
+  minimal:  {name:'מינימלי',  wK:'K',wQ:'Q',wR:'R',wB:'B',wN:'N',wP:'p',   bK:'K',bQ:'Q',bR:'R',bB:'B',bN:'N',bP:'p'},
 };
 
 const BOARD_THEMES = [
@@ -519,9 +519,15 @@ function calcSqSize(){
 function sqAlg(row,col){
   return flipped ? FILES[7-col]+(row+1) : FILES[col]+(8-row);
 }
-function sqRowCol(alg){
-  const f=alg.charCodeAt(0)-97, r=parseInt(alg[1])-1;
-  return flipped ? {row:7-r, col:7-f} : {row:7-r, col:f};
+// Convert algebraic square to visual grid position (row=0 top, col=0 left)
+function sqToVisual(alg){
+  const fileIdx=alg.charCodeAt(0)-97; // a=0..h=7
+  const rankIdx=parseInt(alg[1])-1;   // rank1=0..rank8=7
+  if(!flipped){
+    return {row:7-rankIdx, col:fileIdx};  // rank8=row0, a=col0
+  } else {
+    return {row:rankIdx, col:7-fileIdx};  // rank1=row0, h=col0
+  }
 }
 
 function buildBoard(){
@@ -631,7 +637,7 @@ function clearArrows(){
 }
 
 function sqCenter(alg){
-  const rc=sqRowCol(alg);
+  const rc=sqToVisual(alg);
   return {x: rc.col*SQ + SQ/2, y: rc.row*SQ + SQ/2};
 }
 
@@ -1061,7 +1067,11 @@ function buildThemeUI(){
     const d=document.createElement('div');
     d.className='piece-style-card';d.id='ps_'+id;
     d.onclick=()=>applyPieceSet(id);
-    d.innerHTML='<span class="piece-preview">'+set.wK+'</span><div class="piece-name">'+set.name+'</div>';
+    // show white king + black pawn as preview
+    d.innerHTML='<span class="piece-preview" style="letter-spacing:2px">'
+      +'<span style="color:#fff;text-shadow:0 0 2px #000,-1px -1px 0 #000,1px 1px 0 #000">'+set.wK+'</span>'
+      +' <span style="color:#222;font-size:0.75em">'+set.bP+'</span>'
+      +'</span><div class="piece-name">'+set.name+'</div>';
     ps.appendChild(d);
   });
 

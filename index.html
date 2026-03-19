@@ -39,7 +39,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 /* ─── LAYOUT ─── */
 .app{display:grid;grid-template-columns:1fr 320px;flex:1;overflow:hidden;position:relative;z-index:1}
 /* ─── BOARD SECTION ─── */
-.bsec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 12px 12px;gap:7px;overflow:hidden;position:relative}
+.bsec{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:16px 12px 12px;gap:7px;overflow-y:auto;overflow-x:hidden;position:relative}
 .board-container{display:flex;flex-direction:column;align-items:flex-start;flex-shrink:0}
 .board-row{display:flex;align-items:flex-start;flex-shrink:0}
 .rank-col{display:flex;flex-direction:column;justify-content:space-around;width:16px;flex-shrink:0}
@@ -78,7 +78,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .dslider{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:var(--brd);outline:none}
 .dslider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 7px rgba(201,168,76,.5)}
 .dval{font-size:.8rem;font-weight:700;color:var(--gold);min-width:18px;text-align:center}
-.bbtns{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;width:100%;max-width:700px}
+.bbtns{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;width:100%;max-width:700px;margin-bottom:10px;}
 .caprow{display:flex;gap:1px;flex-wrap:wrap;min-height:17px;font-size:.9rem}
 .sdiff{font-size:.66rem;color:var(--gold);font-weight:700;min-width:18px}
 .evalwrap{display:flex;flex-direction:column;align-items:center;gap:3px;margin-right:5px;flex-shrink:0}
@@ -91,9 +91,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 @keyframes spin{to{transform:rotate(360deg)}}
 /* ─── SIDE PANEL ─── */
 .spanel{border-left:1px solid var(--brd);background:var(--panel);display:flex;flex-direction:column;overflow:hidden}
-.ptabs{display:flex;border-bottom:1px solid var(--brd);background:var(--card);flex-shrink:0;overflow-x:auto}
+.ptabs-wrapper {display:flex; align-items:center; background:var(--card); border-bottom:1px solid var(--brd); flex-shrink:0; position:relative;}
+.ptabs{display:flex;flex:1;overflow-x:auto;scroll-behavior:smooth;}
 .ptabs::-webkit-scrollbar{display:none}
-.ptab{flex-shrink:0;padding:10px 7px;font-size:.62rem;font-weight:500;color:var(--t3);cursor:pointer;border:none;background:transparent;font-family:'Outfit',sans-serif;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap}
+.tab-arr {background:rgba(14,21,32,.95); color:var(--gold); border:none; padding:0 10px; font-size:.9rem; cursor:pointer; z-index:10; height:100%; display:none;}
+.tab-arr:hover {color:var(--goldl); background:rgba(201,168,76,.1);}
+.ptab{flex-shrink:0;padding:12px 10px;font-size:.64rem;font-weight:500;color:var(--t3);cursor:pointer;border:none;background:transparent;font-family:'Outfit',sans-serif;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap}
 .ptab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .ptab:hover:not(.active){color:var(--t2)}
 .pcnt{flex:1;overflow-y:auto;padding:13px}
@@ -181,7 +184,8 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .mload{display:flex;align-items:center;justify-content:center;gap:10px;padding:28px 0;color:var(--t3);font-size:.81rem}
 body.fs-mode .spanel{display:none}
 body.fs-mode .app{grid-template-columns:1fr}
-body.fs-mode .bsec{padding:8px 8px 8px}
+/* במצב מסך מלא הלוח ממורכז קצת יותר טוב והכפתורים שומרים על מיקומם */
+body.fs-mode .bsec{padding:16px 8px 30px;}
 #fsAnal{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:linear-gradient(to top,rgba(8,12,16,.97) 0%,rgba(8,12,16,.8) 80%,transparent 100%);padding:10px 20px 14px;max-height:36vh;overflow-y:auto}
 #fsAnal .inner{max-width:700px;margin:0 auto}
 .rev-banner{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;padding:6px 14px;border-radius:20px;font-weight:700;font-size:.8rem;z-index:50;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:none;align-items:center;gap:6px;}
@@ -208,10 +212,9 @@ body.fs-mode .bsec{padding:8px 8px 8px}
 <div class="app" id="appGrid">
   <section class="bsec" id="bsec">
     <div class="rev-banner" id="revBanner" onclick="exitReviewMode()">👀 מצב צפייה - חזור למשחק הנוכחי</div>
-    <div style="width:100%;display:flex;align-items:center;gap:6px;min-height:16px">
+    <div style="width:100%;display:flex;align-items:center;gap:6px;min-height:16px;margin-top:auto">
       <span class="sdiff" id="sBlack"></span><div class="caprow" id="capBlack"></div>
     </div>
-    <!-- חשוב: dir="ltr" פותר את בעיית כיוון החיצים והמיקומים מול SVG -->
     <div class="board-container" id="boardContainer" dir="ltr">
       <div class="board-row">
         <div class="evalwrap">
@@ -226,7 +229,6 @@ body.fs-mode .bsec{padding:8px 8px 8px}
         </div>
       </div>
       <div class="file-row" id="fileRow">
-         <!-- רווח שיאזן את עמודת הדירוג ובר ההערכה שמשמאל -->
          <div style="width:25px;flex-shrink:0"></div>
          <div id="fileLabels" style="display:flex;flex:1;"></div>
       </div>
@@ -244,20 +246,24 @@ body.fs-mode .bsec{padding:8px 8px 8px}
       <input type="range" class="dslider" id="dsl" min="1" max="20" value="5" oninput="document.getElementById('dval').textContent=this.value;saveLS()">
       <span class="dval" id="dval">5</span>
     </div>
-    <div class="bbtns">
+    <div class="bbtns" style="margin-bottom:auto">
       <button class="btn btn-out btn-sm" onclick="flipBoard()">↕ הפוך</button>
       <button class="btn btn-cyan btn-sm" onclick="analyzePos()">🧠 נתח עמדה</button>
     </div>
   </section>
   <aside class="spanel" id="spanel">
-    <div class="ptabs">
-      <button class="ptab active" onclick="tab('setup')">⚙ הגדרות</button>
-      <button class="ptab" onclick="tab('history')">📋 היסטוריה</button>
-      <button class="ptab" onclick="tab('analysis')">🧠 ניתוח</button>
-      <button class="ptab" onclick="tab('chat')">💬 צ'אט AI</button>
-      <button class="ptab" onclick="tab('themes')">🎨 עיצוב</button>
-      <button class="ptab" onclick="tab('tutorial')">📖 מדריך</button>
-      <button class="ptab" onclick="tab('stats')">📈 נתונים</button>
+    <div class="ptabs-wrapper">
+      <button class="tab-arr" id="taRight" onclick="scrollPtabs(1)" title="הסתרת ימין">▶</button>
+      <div class="ptabs" id="ptabs" onscroll="checkPtabs()">
+        <button class="ptab active" onclick="tab('setup')">⚙ הגדרות</button>
+        <button class="ptab" onclick="tab('history')">📋 היסטוריה</button>
+        <button class="ptab" onclick="tab('analysis')">🧠 ניתוח</button>
+        <button class="ptab" onclick="tab('chat')">💬 צ'אט AI</button>
+        <button class="ptab" onclick="tab('themes')">🎨 עיצוב</button>
+        <button class="ptab" onclick="tab('tutorial')">📖 מדריך</button>
+        <button class="ptab" onclick="tab('stats')">📈 נתונים</button>
+      </div>
+      <button class="tab-arr" id="taLeft" onclick="scrollPtabs(-1)" title="הסתרת שמאל">◀</button>
     </div>
     <div class="pcnt">
       <!-- SETUP -->
@@ -282,6 +288,12 @@ body.fs-mode .bsec{padding:8px 8px 8px}
       </div>
       <!-- HISTORY (GAMES & CHATS) -->
       <div class="tpane" id="tab-history">
+        <div style="display:flex; gap:5px; margin-bottom:12px; align-items:center; flex-wrap:wrap">
+           <button class="btn btn-out btn-sm" onclick="backupData()">💾 גיבוי נתונים</button>
+           <label class="btn btn-out btn-sm" style="margin:0;cursor:pointer;">
+              📂 שחזור נתונים <input type="file" style="display:none" accept=".json" onchange="restoreData(event)">
+           </label>
+        </div>
         <div style="display:flex; gap:5px; margin-bottom:12px;">
            <button class="btn btn-cyan btn-sm" style="flex:1" id="btnTabGames" onclick="switchHist('games')">🎮 משחקים</button>
            <button class="btn btn-out btn-sm" style="flex:1" id="btnTabChats" onclick="switchHist('chats')">💬 צ'אטים</button>
@@ -300,17 +312,13 @@ body.fs-mode .bsec{padding:8px 8px 8px}
         <!-- CHATS VIEW -->
         <div id="histChatsPane" style="display:none;">
            <div style="display:flex; gap:5px; margin-bottom:12px; flex-wrap:wrap;">
-              <button class="btn btn-gold btn-sm" onclick="newChat()" style="flex:1">➕ חדש</button>
-              <button class="btn btn-out btn-sm" onclick="backupChats()">💾 גיבוי</button>
-              <label class="btn btn-out btn-sm" style="margin:0;cursor:pointer;">
-                 📂 העלאה <input type="file" style="display:none" accept=".json" onchange="restoreChats(event)">
-              </label>
+              <button class="btn btn-gold btn-sm" onclick="newChat()" style="width:100%">➕ צ'אט חדש</button>
            </div>
            <div class="slbl">היסטוריית הצ'אטים שלך</div>
            <div id="chatsArchiveList" style="display:flex; flex-direction:column; gap:6px;"></div>
         </div>
 
-        <!-- REVIEW CONTROLS (Shows when a game is selected) -->
+        <!-- REVIEW CONTROLS -->
         <div id="histReviewPane" style="display:none;">
            <div class="slbl" style="color:var(--gold)">צפייה במשחק עבר</div>
            <div style="display:flex; gap:5px; margin-bottom:12px; align-items:center;">
@@ -323,7 +331,11 @@ body.fs-mode .bsec{padding:8px 8px 8px}
            <div id="revExpl" class="xpanel-box" style="display:none;">
               <div class="xtitle" id="revExplTitle"></div>
               <div class="xtext" id="revExplText"></div>
-              <button class="btn btn-out btn-sm" style="width:100%; margin-top:8px" onclick="showRevDemo()">📍 הצג תרשים על הלוח</button>
+              <div class="xnav" style="margin-top:8px">
+                 <button class="btn btn-out btn-sm" id="revBprev" onclick="revExplStep(-1)">◀ קודם</button>
+                 <span class="xcnt" id="revXcnt"></span>
+                 <button class="btn btn-cyan btn-sm" id="revBnext" onclick="revExplStep(1)">הבא ▶</button>
+              </div>
            </div>
         </div>
       </div>
@@ -476,6 +488,7 @@ const TUT_STEPS=[
   {title:'רוקדה 🏰',text:'המלך זז שני ריבועים לכיוון הצריח, והצריח קופץ לצד השני. זהו המהלך היחיד שמזיז שני כלים בבת אחת!',hint:'תנאים: המלך והצריח לא זזו, אין כלים ביניהם, המלך לא בשח.',highlights:['e1','g1','f1','h1'],arrows:[{from:'e1',to:'g1',color:'orange'},{from:'h1',to:'f1',color:'cyan'}]},
   {title:'טיפ: שלוט במרכז!',text:'כלים במרכז שולטים על יותר ריבועים. הזז e2→e4 ו-d2→d4 בתחילת המשחק.',hint:'מנצח שמשחק מהמרכז, לא מהצדדים.',highlights:['d4','d5','e4','e5'],arrows:[{from:'e2',to:'e4',color:'orange'},{from:'d2',to:'d4',color:'orange'}]},
 ];
+
 // ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
@@ -503,12 +516,41 @@ let reviewHistory =[];
 let reviewMoveIndex = 0;
 let reviewGameObj = null;
 
+let currentRevExplSteps =[];
+let currentRevExplIdx = 0;
+
 // CHATS ARCHIVE
 let chatsArchive =[];
 let currentChatId = Date.now();
 let currentChatTitle = "צ'אט חדש";
 let currentChatStarred = false;
 let currentChatMsgs =[];
+
+// ═══════════════════════════════════════
+// TABS SCROLL ARROWS LOGIC
+// ═══════════════════════════════════════
+function checkPtabs() {
+  const el = document.getElementById('ptabs');
+  const rBtn = document.getElementById('taRight');
+  const lBtn = document.getElementById('taLeft');
+  if (!el) return;
+  if (el.scrollWidth <= el.clientWidth + 2) {
+    rBtn.style.display = 'none'; lBtn.style.display = 'none'; return;
+  }
+  const maxScroll = el.scrollWidth - el.clientWidth;
+  const pos = Math.abs(el.scrollLeft);
+  
+  // In RTL, scrollLeft starts at 0 (right edge). When moving left, it becomes negative (or positive depending on browser).
+  // pos==0 means rightmost. pos==maxScroll means leftmost.
+  rBtn.style.display = pos < 2 ? 'none' : 'block';
+  lBtn.style.display = pos >= maxScroll - 2 ? 'none' : 'block';
+}
+
+function scrollPtabs(dir) {
+  // dir 1 = scroll right, dir -1 = scroll left
+  const el = document.getElementById('ptabs');
+  if(el) el.scrollBy({ left: dir * 120, behavior: 'smooth' });
+}
 
 // ═══════════════════════════════════════
 // LOCAL STORAGE
@@ -527,7 +569,7 @@ function loadLS(){
   if(!apiKeys.length)addKey();
   updateStUI();refreshThUI();
   renderGamesList(); renderChatsList();
-  if(currentChatMsgs.length === 0) renderActiveChat(); // welcome message
+  if(currentChatMsgs.length === 0) renderActiveChat(); 
 }
 
 // ═══════════════════════════════════════
@@ -540,8 +582,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   initTutorial();
   window.addEventListener('resize',onResize);
   document.getElementById('analModal').addEventListener('click',e=>{if(e.target===document.getElementById('analModal'))closeModal();});
+  setTimeout(checkPtabs, 100);
 });
-function onResize(){calcSQ();buildBoard();buildCoords();renderBoard();if(xsteps.length)showXstep(xidx);if(tutActive)applyTutBoard(tutIdx);}
+function onResize(){calcSQ();buildBoard();buildCoords();renderBoard();if(xsteps.length)showXstep(xidx);if(tutActive)applyTutBoard(tutIdx); checkPtabs();}
 function toggleFS(){
   fsMode=!fsMode;
   document.body.classList.toggle('fs-mode',fsMode);
@@ -556,34 +599,37 @@ function toggleFS(){
 function calcSQ(){
   const hh=document.querySelector('header').offsetHeight;
   const vw=window.innerWidth,vh=window.innerHeight;
-  const bottomChrome=212;
+  const bottomChrome=212; // Reserves space for the controls
   const leftChrome=38;
   let aw,ah;
-  if(fsMode){aw=vw-leftChrome-20;ah=vh-hh-bottomChrome+60;}
-  else{const panelW=document.getElementById('spanel').offsetWidth||320;aw=vw-panelW-leftChrome-40;ah=vh-hh-bottomChrome;}
+  if(fsMode){
+    aw=vw-leftChrome-20;
+    // החישוב תוקן - לא מוסיף חריגות, שומר על הכפתורים שיהיו תמיד בתוך התצוגה!
+    ah=vh-hh-bottomChrome; 
+  }
+  else{
+    const panelW=document.getElementById('spanel').offsetWidth||320;
+    aw=vw-panelW-leftChrome-40;
+    ah=vh-hh-bottomChrome;
+  }
   SQ=Math.floor(Math.min(aw,ah)/8);
   SQ=Math.max(36,Math.min(SQ,90));
 }
 
-// Fixed LTR mappings: CSS Grid is LTR now! So col=0 is perfectly Left.
 function sqAlg(row, col){
-  // Non-flipped: row 0 (top) = rank 8. col 0 (left) = file a.
-  // Flipped: row 0 (top) = rank 1. col 0 (left) = file h.
   const r = flipped ? row + 1 : 8 - row;
   const c = flipped ? FILES[7 - col] : FILES[col];
   return c + r;
 }
 
 function algToSvgCenter(alg){
-  const fileIdx = alg.charCodeAt(0) - 97; // a=0 .. h=7
-  const rankIdx = parseInt(alg[1]) - 1; // 1=0 .. 8=7
+  const fileIdx = alg.charCodeAt(0) - 97;
+  const rankIdx = parseInt(alg[1]) - 1;
   let visualCol, visualRow;
   if(!flipped){
-    visualCol = fileIdx; // 'a' is left (0)
-    visualRow = 7 - rankIdx; // '8' is top (0)
+    visualCol = fileIdx; visualRow = 7 - rankIdx;
   } else {
-    visualCol = 7 - fileIdx; // 'h' is left (0)
-    visualRow = rankIdx; // '1' is top (0)
+    visualCol = 7 - fileIdx; visualRow = rankIdx;
   }
   return { x: visualCol * SQ + SQ / 2, y: visualRow * SQ + SQ / 2 };
 }
@@ -705,7 +751,7 @@ function hlSq(alg,cls){document.getElementById('sq_'+alg)?.classList.add(cls);}
 // GAMEPLAY
 // ═══════════════════════════════════════
 function onSq(sq){
-  if(reviewMode) return; // מניעת לחיצות בזמן מצב צפייה
+  if(reviewMode) return; 
   if(!started||game.game_over())return;
   if(gmode!=='p2'&&game.turn()!==pcol)return;
   if(selSq){
@@ -728,7 +774,7 @@ function doMove(from,to){
   const mv=game.move({from,to,promotion:'q'});if(!mv)return;
   lastF=from;lastT=to;
   renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();
-  updateGameArchive(); // שמירה לארכיון
+  updateGameArchive(); 
   moveSinceAnal++;
   if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}
   if(!game.game_over()&&gmode!=='p2')setTimeout(aiMove,10);
@@ -781,7 +827,7 @@ function colBtns(){['w','b'].forEach(c=>{const el=document.getElementById('c'+c.
 function startGame(){
   if(reviewMode) exitReviewMode();
   game.reset();lastF=null;lastT=null;selSq=null;legal=[];started=true;keyIdx=0;moveSinceAnal=0;
-  currentGameId = Date.now(); currentGameExpl = {}; // אתחול משחק חדש בהיסטוריה
+  currentGameId = Date.now(); currentGameExpl = {}; 
   flipped=gmode!=='p2'&&pcol==='b';
   clearX();clearTut();buildBoard();buildCoords();renderBoard();updHist();updateSt();updCap();clearAbox();
   document.getElementById('evalTxt').textContent='—';document.getElementById('bmove').textContent='מהלך מומלץ: —';
@@ -1024,23 +1070,6 @@ function toggleChatStar(id) {
     const c = chatsArchive.find(x => x.id === id);
     if(c) { c.starred = !c.starred; localStorage.setItem('cai_chats', JSON.stringify(chatsArchive)); renderChatsList(); }
 }
-function backupChats() {
-    const blob = new Blob([JSON.stringify(chatsArchive)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'chess_chats_backup.json'; a.click();
-}
-function restoreChats(e) {
-    const file = e.target.files[0];
-    if(!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-        try {
-            const data = JSON.parse(ev.target.result);
-            if(Array.isArray(data)) { chatsArchive = data; localStorage.setItem('cai_chats', JSON.stringify(chatsArchive)); renderChatsList(); toast("הצ'אטים שוחזרו בהצלחה", 's'); }
-        } catch(e) { toast("קובץ לא תקין", 'e'); }
-    };
-    reader.readAsText(file);
-}
 
 async function sendChat(){
   const inp=document.getElementById('chatInput');
@@ -1106,7 +1135,7 @@ function startReviewGame(id) {
     document.getElementById('histReviewPane').style.display='block';
     
     document.getElementById('revBanner').style.display='flex';
-    document.querySelector('.bbtns').style.display='none'; // hide normal buttons
+    document.querySelector('.bbtns').style.display='none'; 
     
     revMove(0);
 }
@@ -1117,7 +1146,7 @@ function exitReviewMode() {
     document.getElementById('histReviewPane').style.display='none';
     document.getElementById('histGamesPane').style.display='block';
     clearX();
-    renderBoard(); // render back the active game
+    renderBoard(); 
     toast("חזרת למשחק הנוכחי", 'i');
 }
 function revMove(dir) {
@@ -1127,27 +1156,51 @@ function revMove(dir) {
     
     reviewGameInstance.reset();
     for(let i=0; i<reviewMoveIndex; i++) reviewGameInstance.move(reviewHistory[i]);
-    renderBoard(reviewGameInstance); // render review instance
+    renderBoard(reviewGameInstance); 
     
     document.getElementById('revMoveText').textContent = 'מהלך ' + reviewMoveIndex + ' מתוך ' + reviewHistory.length;
     
     const expl = reviewGameObj.expl[reviewMoveIndex];
     if(expl && expl.length) {
         document.getElementById('revExpl').style.display = 'block';
-        document.getElementById('revExplTitle').textContent = expl[0].title || 'ניתוח AI';
-        document.getElementById('revExplText').textContent = expl[0].text;
-        window.currentRevDemo = expl;
+        currentRevExplSteps = expl;
+        currentRevExplIdx = 0;
+        renderRevExplStep();
     } else {
         document.getElementById('revExpl').style.display = 'none';
         clearArrows(); document.querySelectorAll('.sq').forEach(s=>s.classList.remove('xsq'));
     }
 }
-function showRevDemo() {
-    if(window.currentRevDemo) { xsteps = window.currentRevDemo; xidx = 0; showXstep(0); }
+function renderRevExplStep() {
+    if(!currentRevExplSteps.length) return;
+    const s = currentRevExplSteps[currentRevExplIdx];
+    document.getElementById('revExplTitle').textContent = s.title || 'ניתוח AI';
+    document.getElementById('revExplText').textContent = s.text || '';
+    document.getElementById('revXcnt').textContent = (currentRevExplIdx+1) + ' / ' + currentRevExplSteps.length;
+    
+    document.getElementById('revBprev').disabled = (currentRevExplIdx === 0);
+    document.getElementById('revBnext').disabled = (currentRevExplIdx === currentRevExplSteps.length - 1);
+    
+    clearArrows(); document.querySelectorAll('.sq').forEach(sq=>sq.classList.remove('xsq'));
+    
+    const h = reviewGameInstance.history({verbose:true});
+    if(h.length) { 
+        document.getElementById('sq_'+h[h.length-1].from)?.classList.add('hl-f'); 
+        document.getElementById('sq_'+h[h.length-1].to)?.classList.add('hl-t'); 
+    }
+
+    if(Array.isArray(s.highlight)) s.highlight.forEach(sq=>hlSq(sq,'xsq'));
+    if(Array.isArray(s.arrows)) s.arrows.forEach(a=>{if(a&&a.from&&a.to) drawArrow(a.from,a.to,a.color||'cyan');});
+}
+function revExplStep(dir) {
+    currentRevExplIdx += dir;
+    if(currentRevExplIdx < 0) currentRevExplIdx = 0;
+    if(currentRevExplIdx >= currentRevExplSteps.length) currentRevExplIdx = currentRevExplSteps.length - 1;
+    renderRevExplStep();
 }
 
 // ═══════════════════════════════════════
-// HISTORY LIST RENDERERS
+// HISTORY LIST RENDERERS & BACKUP
 // ═══════════════════════════════════════
 function renderGamesList() {
     const list = document.getElementById('gamesArchiveList');
@@ -1187,6 +1240,37 @@ function renderChatsList() {
         list.appendChild(div);
     });
 }
+function backupData() {
+    const data = { games: gamesArchive, chats: chatsArchive };
+    const blob = new Blob([JSON.stringify(data)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'chess_ai_backup.json'; a.click();
+}
+function restoreData(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const data = JSON.parse(ev.target.result);
+            let restored = false;
+            if(data.games && Array.isArray(data.games)) { gamesArchive = data.games; restored = true; }
+            if(data.chats && Array.isArray(data.chats)) { chatsArchive = data.chats; restored = true; }
+            // תמיכה לאחור במידה והעלו קובץ שהיה רק של צ'אטים
+            if(!restored && Array.isArray(data)) { chatsArchive = data; restored = true; }
+            
+            if(restored) {
+                localStorage.setItem('cai_games', JSON.stringify(gamesArchive));
+                localStorage.setItem('cai_chats', JSON.stringify(chatsArchive));
+                renderGamesList(); renderChatsList();
+                toast("הנתונים שוחזרו בהצלחה", 's');
+            } else {
+                toast("מבנה קובץ לא תקין", 'e');
+            }
+        } catch(e) { toast("קובץ לא תקין", 'e'); }
+    };
+    reader.readAsText(file);
+}
 
 // ═══════════════════════════════════════
 // TUTORIAL
@@ -1220,7 +1304,11 @@ function tab(name){
   document.querySelectorAll('.tpane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
-  document.querySelectorAll('.ptab')[TABS.indexOf(name)].classList.add('active');
+  const activeBtn = document.querySelectorAll('.ptab')[TABS.indexOf(name)];
+  if(activeBtn) {
+      activeBtn.classList.add('active');
+      activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); // מגולל אוטומטית לטאב אם הוא מוסתר
+  }
   if(name==='tutorial'){tutActive=true;applyTutBoard(tutIdx);}
   else if(tutActive){tutActive=false;clearTut();}
 }
@@ -1229,7 +1317,7 @@ function switchHist(t) {
   document.getElementById('btnTabChats').className = t==='chats'?'btn btn-cyan btn-sm':'btn btn-out btn-sm';
   document.getElementById('histGamesPane').style.display = t==='games'?'block':'none';
   document.getElementById('histChatsPane').style.display = t==='chats'?'block':'none';
-  document.getElementById('histReviewPane').style.display = 'none'; // reset review pane
+  document.getElementById('histReviewPane').style.display = 'none'; 
 }
 
 // ═══════════════════════════════════════

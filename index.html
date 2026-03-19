@@ -81,6 +81,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .bbtns{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;width:100%;max-width:700px;margin-bottom:10px;}
 .caprow{display:flex;gap:1px;flex-wrap:wrap;min-height:17px;font-size:.9rem}
 .sdiff{font-size:.66rem;color:var(--gold);font-weight:700;min-width:18px}
+.clock{font-family:monospace;font-size:1.1rem;font-weight:700;background:var(--card);border:1px solid var(--brd);border-radius:6px;padding:2px 8px;color:var(--gold);display:none;margin-right:auto;}
 .evalwrap{display:flex;flex-direction:column;align-items:center;gap:3px;margin-right:5px;flex-shrink:0}
 .evalbar{width:9px;flex:1;min-height:60px;background:var(--brd);border-radius:4px;position:relative;overflow:hidden}
 .evalf{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.82);transition:height .4s ease;border-radius:0 0 4px 4px}
@@ -184,7 +185,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .mload{display:flex;align-items:center;justify-content:center;gap:10px;padding:28px 0;color:var(--t3);font-size:.81rem}
 body.fs-mode .spanel{display:none}
 body.fs-mode .app{grid-template-columns:1fr}
-/* במצב מסך מלא הלוח ממורכז קצת יותר טוב והכפתורים שומרים על מיקומם */
 body.fs-mode .bsec{padding:16px 8px 30px;}
 #fsAnal{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:linear-gradient(to top,rgba(8,12,16,.97) 0%,rgba(8,12,16,.8) 80%,transparent 100%);padding:10px 20px 14px;max-height:36vh;overflow-y:auto}
 #fsAnal .inner{max-width:700px;margin:0 auto}
@@ -214,6 +214,7 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
     <div class="rev-banner" id="revBanner" onclick="exitReviewMode()">👀 מצב צפייה - חזור למשחק הנוכחי</div>
     <div style="width:100%;display:flex;align-items:center;gap:6px;min-height:16px;margin-top:auto">
       <span class="sdiff" id="sBlack"></span><div class="caprow" id="capBlack"></div>
+      <div id="timeB" class="clock">05:00</div>
     </div>
     <div class="board-container" id="boardContainer" dir="ltr">
       <div class="board-row">
@@ -235,6 +236,7 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
     </div>
     <div style="width:100%;display:flex;align-items:center;gap:6px;min-height:16px">
       <span class="sdiff" id="sWhite"></span><div class="caprow" id="capWhite"></div>
+      <div id="timeW" class="clock">05:00</div>
     </div>
     <div class="sbar" id="sbar">
       <div class="sdot" id="sdot"></div>
@@ -248,6 +250,7 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
     </div>
     <div class="bbtns" style="margin-bottom:auto">
       <button class="btn btn-out btn-sm" onclick="flipBoard()">↕ הפוך</button>
+      <button class="btn btn-out btn-sm" onclick="undoMove()" title="ניתן גם ללחוץ Ctrl+Z">↶ בטל מהלך</button>
       <button class="btn btn-cyan btn-sm" onclick="analyzePos()">🧠 נתח עמדה</button>
     </div>
   </section>
@@ -284,14 +287,25 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
           <button class="btn btn-out btn-sm" id="cW" onclick="setCol('w')" style="flex:1">♙ לבן</button>
           <button class="btn btn-out btn-sm" id="cB" onclick="setCol('b')" style="flex:1">♟ שחור</button>
         </div>
+        <div class="div"></div>
+        <div class="slbl">שעון שחמט</div>
+        <div style="display:flex; gap:6px; margin-bottom:11px; align-items:center;">
+          <input type="checkbox" id="useClockChk" onchange="toggleClockUI()"> <label for="useClockChk" style="font-size:.7rem;color:var(--t2);cursor:pointer;">הפעל שעון שחמט</label>
+          <select id="clockMins" style="background:var(--inp); color:var(--t1); border:1px solid var(--brd); border-radius:4px; margin-right:auto; padding:2px 5px; font-family:'Outfit',sans-serif; font-size:.7rem;" onchange="saveLS()">
+            <option value="3">3 דק' (Blitz)</option>
+            <option value="5" selected>5 דק' (Blitz)</option>
+            <option value="10">10 דק' (Rapid)</option>
+            <option value="15">15 דק' (Rapid)</option>
+          </select>
+        </div>
         <button class="btn btn-gold" style="width:100%" onclick="startGame()">▶ התחל משחק</button>
       </div>
       <!-- HISTORY (GAMES & CHATS) -->
       <div class="tpane" id="tab-history">
         <div style="display:flex; gap:5px; margin-bottom:12px; align-items:center; flex-wrap:wrap">
-           <button class="btn btn-out btn-sm" onclick="backupData()">💾 גיבוי נתונים</button>
-           <label class="btn btn-out btn-sm" style="margin:0;cursor:pointer;">
-              📂 שחזור נתונים <input type="file" style="display:none" accept=".json" onchange="restoreData(event)">
+           <button class="btn btn-out btn-sm" onclick="backupData()" style="flex:1">💾 גיבוי</button>
+           <label class="btn btn-out btn-sm" style="margin:0;cursor:pointer;flex:1;text-align:center">
+              📂 שחזור <input type="file" style="display:none" accept=".json" onchange="restoreData(event)">
            </label>
         </div>
         <div style="display:flex; gap:5px; margin-bottom:12px;">
@@ -299,7 +313,6 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
            <button class="btn btn-out btn-sm" style="flex:1" id="btnTabChats" onclick="switchHist('chats')">💬 צ'אטים</button>
         </div>
         
-        <!-- GAMES VIEW -->
         <div id="histGamesPane">
            <div class="slbl">מהלכי המשחק הנוכחי</div>
            <div class="mgrid" id="mgrid" style="max-height:130px;overflow-y:auto;margin-bottom:12px;border-bottom:1px solid var(--brd);padding-bottom:5px;">
@@ -309,7 +322,6 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
            <div id="gamesArchiveList" style="display:flex; flex-direction:column; gap:6px;"></div>
         </div>
 
-        <!-- CHATS VIEW -->
         <div id="histChatsPane" style="display:none;">
            <div style="display:flex; gap:5px; margin-bottom:12px; flex-wrap:wrap;">
               <button class="btn btn-gold btn-sm" onclick="newChat()" style="width:100%">➕ צ'אט חדש</button>
@@ -318,7 +330,6 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
            <div id="chatsArchiveList" style="display:flex; flex-direction:column; gap:6px;"></div>
         </div>
 
-        <!-- REVIEW CONTROLS -->
         <div id="histReviewPane" style="display:none;">
            <div class="slbl" style="color:var(--gold)">צפייה במשחק עבר</div>
            <div style="display:flex; gap:5px; margin-bottom:12px; align-items:center;">
@@ -365,16 +376,15 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
       <!-- CHAT -->
       <div class="tpane" id="tab-chat">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-           <div class="slbl" style="margin:0" id="chatTitleLbl">🤖 צ'אט עם מאמן AI</div>
+           <div class="slbl" style="margin:0" id="chatTitleLbl">🤖 צ'אט AI</div>
            <button class="btn btn-ghost btn-sm" onclick="newChat()">➕ צ'אט חדש</button>
         </div>
         <div class="chat-msgs" id="chatMsgs"></div>
         <div class="chat-suggest" id="chatSuggests">
           <button class="chat-sug-btn" onclick="chatAsk('למד אותי על פתיחת מלך e4')">פתיחת e4</button>
-          <button class="chat-sug-btn" onclick="chatAsk('מהי הפתיחה הסיציליאנית?')">סיציליאנית</button>
           <button class="chat-sug-btn" onclick="chatAsk('איך מבצעים רוקדה?')">רוקדה</button>
-          <button class="chat-sug-btn" onclick="chatAsk('מהו מזלג בשחמט?')">מזלג</button>
           <button class="chat-sug-btn" onclick="chatAsk('טיפים לסיום משחק')">סיום משחק</button>
+          <button class="chat-sug-btn" style="border-color:var(--cyan);color:var(--cyan)" onclick="askForTask()">🎯 תן לי משימה אישית</button>
         </div>
         <div class="chat-input-row">
           <textarea class="chat-inp" id="chatInput" placeholder="שאל שאלה על שחמט..." rows="1"
@@ -458,6 +468,33 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
 <div class="twrap" id="twrap"></div>
 <script>
 // ═══════════════════════════════════════
+// SOUND EFFECTS (Web Audio API - No external links!)
+// ═══════════════════════════════════════
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playTone(freq, type, dur, vol, delay=0) {
+    if(!audioCtx) return;
+    try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + dur);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + dur);
+    } catch(e) {}
+}
+function playSound(type) {
+    if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    if(type === 'move') playTone(300, 'sine', 0.1, 0.5);
+    else if(type === 'capture') { playTone(400, 'triangle', 0.1, 0.5); playTone(600, 'sine', 0.1, 0.3, 0.05); }
+    else if(type === 'check') playTone(800, 'square', 0.2, 0.3);
+    else if(type === 'win') { playTone(400, 'sine', 0.1, 0.5, 0); playTone(500, 'sine', 0.1, 0.5, 0.1); playTone(600, 'sine', 0.4, 0.5, 0.2); }
+    else if(type === 'lose') { playTone(400, 'sawtooth', 0.2, 0.5, 0); playTone(350, 'sawtooth', 0.2, 0.5, 0.2); playTone(300, 'sawtooth', 0.5, 0.5, 0.4); }
+}
+
+// ═══════════════════════════════════════
 // PIECE SETS & THEMES
 // ═══════════════════════════════════════
 const PSETS={
@@ -493,7 +530,7 @@ const TUT_STEPS=[
 // STATE
 // ═══════════════════════════════════════
 let game = new Chess();
-let activeGame = game; // References the main playing board
+let activeGame = game; 
 let gmode='normal',pcol='w',flipped=false;
 let started=false,autoAnal=false;
 let selSq=null,legal=[];
@@ -506,10 +543,14 @@ let xsteps=[],xidx=0;
 let tutIdx=0,tutActive=false;
 let moveSinceAnal=0;
 
+// TIMERS
+let clockEnabled = false;
+let timeW = 300, timeB = 300, timerInt = null, lastClockUpdate = 0;
+
 // GAME ARCHIVE & REVIEW
 let gamesArchive =[];
 let currentGameId = Date.now();
-let currentGameExpl = {}; // stores AI explanations for current game by move index
+let currentGameExpl = {}; 
 let reviewMode = false;
 let reviewGameInstance = new Chess();
 let reviewHistory =[];
@@ -527,6 +568,82 @@ let currentChatStarred = false;
 let currentChatMsgs =[];
 
 // ═══════════════════════════════════════
+// KEYBOARD SHORTCUTS (UNDO)
+// ═══════════════════════════════════════
+window.addEventListener('keydown', e => {
+    if((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        undoMove();
+    }
+});
+
+function undoMove() {
+    if(!started || reviewMode || game.history().length === 0) {
+        if(!reviewMode) toast("אין מה לבטל", 'i');
+        return;
+    }
+    // אם המשחק נגמר כבר - נבטל את הסטטוס "נגמר" ונחזיר אחורה
+    game.undo();
+    if(gmode !== 'p2') game.undo(); // מחשב גם מבטל מהלך
+    
+    lastF = null; lastT = null;
+    const h = game.history({verbose:true});
+    if(h.length) { lastF = h[h.length-1].from; lastT = h[h.length-1].to; }
+    
+    renderBoard(); updHist(); updateSt(); updCap(); updateEvalBar(); updateGameArchive();
+    toast("מהלך בוטל", 'i');
+}
+
+// ═══════════════════════════════════════
+// CLOCK LOGIC
+// ═══════════════════════════════════════
+function toggleClockUI() {
+    clockEnabled = document.getElementById('useClockChk').checked;
+    document.getElementById('timeW').style.display = clockEnabled ? 'block' : 'none';
+    document.getElementById('timeB').style.display = clockEnabled ? 'block' : 'none';
+    saveLS();
+}
+
+function initClock() {
+    clearInterval(timerInt);
+    if(!clockEnabled) return;
+    const mins = parseInt(document.getElementById('clockMins').value) || 5;
+    timeW = mins * 60; timeB = mins * 60;
+    renderClock();
+}
+
+function startClock() {
+    if(!clockEnabled) return;
+    lastClockUpdate = Date.now();
+    clearInterval(timerInt);
+    timerInt = setInterval(tickClock, 200);
+}
+
+function tickClock() {
+    if(!started || game.game_over() || !clockEnabled || reviewMode) return;
+    const now = Date.now();
+    const delta = (now - lastClockUpdate) / 1000;
+    lastClockUpdate = now;
+    
+    if(game.turn() === 'w') timeW -= delta; else timeB -= delta;
+    
+    if(timeW <= 0 || timeB <= 0) {
+        timeW = Math.max(0, timeW); timeB = Math.max(0, timeB);
+        renderClock();
+        clearInterval(timerInt);
+        recordResult(true); // timeout flag
+    } else {
+        renderClock();
+    }
+}
+
+function renderClock() {
+    const fw = m => Math.floor(m).toString().padStart(2,'0');
+    document.getElementById('timeW').textContent = fw(timeW/60) + ':' + fw(timeW%60);
+    document.getElementById('timeB').textContent = fw(timeB/60) + ':' + fw(timeB%60);
+}
+
+// ═══════════════════════════════════════
 // TABS SCROLL ARROWS LOGIC
 // ═══════════════════════════════════════
 function checkPtabs() {
@@ -540,14 +657,11 @@ function checkPtabs() {
   const maxScroll = el.scrollWidth - el.clientWidth;
   const pos = Math.abs(el.scrollLeft);
   
-  // In RTL, scrollLeft starts at 0 (right edge). When moving left, it becomes negative (or positive depending on browser).
-  // pos==0 means rightmost. pos==maxScroll means leftmost.
   rBtn.style.display = pos < 2 ? 'none' : 'block';
   lBtn.style.display = pos >= maxScroll - 2 ? 'none' : 'block';
 }
 
 function scrollPtabs(dir) {
-  // dir 1 = scroll right, dir -1 = scroll left
   const el = document.getElementById('ptabs');
   if(el) el.scrollBy({ left: dir * 120, behavior: 'smooth' });
 }
@@ -555,19 +669,33 @@ function scrollPtabs(dir) {
 // ═══════════════════════════════════════
 // LOCAL STORAGE
 // ═══════════════════════════════════════
-const LSK='cai_k6',LSS='cai_s6',LSP='cai_p6';
-function saveLS(){try{localStorage.setItem(LSK,JSON.stringify(apiKeys.filter(k=>k&&k.key).map(k=>k.key)));localStorage.setItem(LSS,JSON.stringify(stats));localStorage.setItem(LSP,JSON.stringify({gmode,pcol,diff:document.getElementById('dsl').value,pset,bgtheme,pwcol,pbcol}));}catch(e){}}
+const LSK='cai_k6',LSS='cai_s6',LSP='cai_p6', LSC='cai_clk';
+function saveLS(){
+    try{
+        localStorage.setItem(LSK,JSON.stringify(apiKeys.filter(k=>k&&k.key).map(k=>k.key)));
+        localStorage.setItem(LSS,JSON.stringify(stats));
+        localStorage.setItem(LSP,JSON.stringify({gmode,pcol,diff:document.getElementById('dsl').value,pset,bgtheme,pwcol,pbcol}));
+        localStorage.setItem(LSC,JSON.stringify({en:document.getElementById('useClockChk').checked, min:document.getElementById('clockMins').value}));
+    }catch(e){}
+}
 function loadLS(){
   try{
     const ks=JSON.parse(localStorage.getItem(LSK)||'[]');ks.forEach(k=>{if(k)addKey(k);});
     const s=JSON.parse(localStorage.getItem(LSS)||'null');if(s)stats={...stats,...s};
     const p=JSON.parse(localStorage.getItem(LSP)||'null');
     if(p){if(p.gmode)setMode(p.gmode);if(p.pcol)setCol(p.pcol);if(p.diff){document.getElementById('dsl').value=p.diff;document.getElementById('dval').textContent=p.diff;}if(p.pset)pset=p.pset;if(p.bgtheme)applyBG(p.bgtheme);if(p.pwcol)applyPC('w',p.pwcol);if(p.pbcol)applyPC('b',p.pbcol);}
+    
+    const c=JSON.parse(localStorage.getItem(LSC)||'null');
+    if(c) {
+        document.getElementById('useClockChk').checked = c.en;
+        if(c.min) document.getElementById('clockMins').value = c.min;
+    }
+    
     gamesArchive = JSON.parse(localStorage.getItem('cai_games') || '[]');
     chatsArchive = JSON.parse(localStorage.getItem('cai_chats') || '[]');
   }catch(e){}
   if(!apiKeys.length)addKey();
-  updateStUI();refreshThUI();
+  updateStUI();refreshThUI(); toggleClockUI(); renderClock();
   renderGamesList(); renderChatsList();
   if(currentChatMsgs.length === 0) renderActiveChat(); 
 }
@@ -594,24 +722,16 @@ function toggleFS(){
 }
 
 // ═══════════════════════════════════════
-// SQUARE SIZE & COORDS (WITH LTR FIX)
+// SQUARE SIZE & COORDS
 // ═══════════════════════════════════════
 function calcSQ(){
   const hh=document.querySelector('header').offsetHeight;
   const vw=window.innerWidth,vh=window.innerHeight;
-  const bottomChrome=212; // Reserves space for the controls
+  const bottomChrome=212; 
   const leftChrome=38;
   let aw,ah;
-  if(fsMode){
-    aw=vw-leftChrome-20;
-    // החישוב תוקן - לא מוסיף חריגות, שומר על הכפתורים שיהיו תמיד בתוך התצוגה!
-    ah=vh-hh-bottomChrome; 
-  }
-  else{
-    const panelW=document.getElementById('spanel').offsetWidth||320;
-    aw=vw-panelW-leftChrome-40;
-    ah=vh-hh-bottomChrome;
-  }
+  if(fsMode){ aw=vw-leftChrome-20; ah=vh-hh-bottomChrome; }
+  else{ const panelW=document.getElementById('spanel').offsetWidth||320; aw=vw-panelW-leftChrome-40; ah=vh-hh-bottomChrome; }
   SQ=Math.floor(Math.min(aw,ah)/8);
   SQ=Math.max(36,Math.min(SQ,90));
 }
@@ -626,11 +746,8 @@ function algToSvgCenter(alg){
   const fileIdx = alg.charCodeAt(0) - 97;
   const rankIdx = parseInt(alg[1]) - 1;
   let visualCol, visualRow;
-  if(!flipped){
-    visualCol = fileIdx; visualRow = 7 - rankIdx;
-  } else {
-    visualCol = 7 - fileIdx; visualRow = rankIdx;
-  }
+  if(!flipped){ visualCol = fileIdx; visualRow = 7 - rankIdx; } 
+  else { visualCol = 7 - fileIdx; visualRow = rankIdx; }
   return { x: visualCol * SQ + SQ / 2, y: visualRow * SQ + SQ / 2 };
 }
 
@@ -655,22 +772,12 @@ function buildBoard(){
 }
 
 function buildCoords(){
-  const rc=document.getElementById('rankCol');
-  rc.innerHTML='';
+  const rc=document.getElementById('rankCol'); rc.innerHTML='';
   const ranks=flipped?[1,2,3,4,5,6,7,8]:[8,7,6,5,4,3,2,1];
-  ranks.forEach(r=>{
-    const d=document.createElement('div');
-    d.className='rlbl';d.style.height=SQ+'px';d.textContent=r;
-    rc.appendChild(d);
-  });
-  const fc=document.getElementById('fileLabels');
-  fc.innerHTML='';
+  ranks.forEach(r=>{ const d=document.createElement('div'); d.className='rlbl';d.style.height=SQ+'px';d.textContent=r; rc.appendChild(d); });
+  const fc=document.getElementById('fileLabels'); fc.innerHTML='';
   const fls=flipped?['h','g','f','e','d','c','b','a']:['a','b','c','d','e','f','g','h'];
-  fls.forEach(f=>{
-    const d=document.createElement('div');
-    d.className='flbl';d.style.width=SQ+'px';d.textContent=f;
-    fc.appendChild(d);
-  });
+  fls.forEach(f=>{ const d=document.createElement('div'); d.className='flbl';d.style.width=SQ+'px';d.textContent=f; fc.appendChild(d); });
   document.getElementById('evalbar').style.height=(SQ*8)+'px';
 }
 
@@ -771,12 +878,22 @@ function showLegal(sq){
   mvs.forEach(m=>{const el=document.getElementById('sq_'+m.to);if(el)el.classList.add(m.captured?'lc':'lm');});
 }
 function doMove(from,to){
+  if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  
+  if(game.history().length === 0) startClock();
+  
   const mv=game.move({from,to,promotion:'q'});if(!mv)return;
   lastF=from;lastT=to;
+  
+  if(mv.captured) playSound('capture');
+  else playSound('move');
+  
   renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();
   updateGameArchive(); 
   moveSinceAnal++;
+  
   if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}
+  
   if(!game.game_over()&&gmode!=='p2')setTimeout(aiMove,10);
   else if(game.game_over())recordResult();
 }
@@ -787,9 +904,14 @@ function doMove(from,to){
 function updateSt(){
   const dot=document.getElementById('sdot'),txt=document.getElementById('stxt'),bdg=document.getElementById('tbdg');
   if(!started){txt.textContent='לחץ "התחל משחק"';dot.className='sdot en';bdg.textContent='♙ לבן';bdg.className='tbdg';return;}
-  if(game.in_checkmate()){const w=game.turn()==='w'?'שחור':'לבן';txt.textContent='♚ שח-מט! '+w+' ניצח';dot.className='sdot en';bdg.textContent='🏆';bdg.className='tbdg';}
+  if(game.in_checkmate()){
+      const w=game.turn()==='w'?'שחור':'לבן';txt.textContent='♚ שח-מט! '+w+' ניצח';dot.className='sdot en';bdg.textContent='🏆';bdg.className='tbdg';
+  }
   else if(game.in_draw()){txt.textContent='🤝 תיקו!';dot.className='sdot en';bdg.textContent='½-½';bdg.className='tbdg';}
-  else if(game.in_check()){const t=game.turn()==='w'?'לבן':'שחור';txt.textContent='⚡ שח! '+t;dot.className='sdot th';bdg.textContent=game.turn()==='w'?'♙ לבן':'♟ שחור';bdg.className='tbdg'+(game.turn()==='b'?' bt':'');}
+  else if(game.in_check()){
+      const t=game.turn()==='w'?'לבן':'שחור';txt.textContent='⚡ שח! '+t;dot.className='sdot th';bdg.textContent=game.turn()==='w'?'♙ לבן':'♟ שחור';bdg.className='tbdg'+(game.turn()==='b'?' bt':'');
+      playSound('check');
+  }
   else{const t=gmode==='p2'?(game.turn()==='w'?'תורו של לבן':'תורו של שחור'):'תורו של '+(game.turn()==='w'?'לבן':'שחור');txt.textContent=t;dot.className='sdot';bdg.textContent=game.turn()==='w'?'♙ לבן':'♟ שחור';bdg.className='tbdg'+(game.turn()==='b'?' bt':'');}
 }
 function updateEvalBar(){
@@ -829,6 +951,7 @@ function startGame(){
   game.reset();lastF=null;lastT=null;selSq=null;legal=[];started=true;keyIdx=0;moveSinceAnal=0;
   currentGameId = Date.now(); currentGameExpl = {}; 
   flipped=gmode!=='p2'&&pcol==='b';
+  initClock();
   clearX();clearTut();buildBoard();buildCoords();renderBoard();updHist();updateSt();updCap();clearAbox();
   document.getElementById('evalTxt').textContent='—';document.getElementById('bmove').textContent='מהלך מומלץ: —';
   updateEvalBar();
@@ -836,10 +959,27 @@ function startGame(){
   if(gmode!=='p2'&&pcol==='b')setTimeout(aiMove,600);
 }
 function confirmNew(){if(started&&!game.game_over()&&game.history().length>0&&!confirm('משחק חדש?'))return;startGame();}
-function recordResult(){
-  if(game.in_checkmate()){if(gmode==='p2'){const w=game.turn()==='w'?'שחור':'לבן';toast('🏆 '+w+' ניצח!','s');}else if(game.turn()!==pcol){stats.w++;stats.s++;toast('🏆 ניצחת!','s');}else{stats.l++;stats.s=0;toast('💀 הפסדת','e');}}else if(game.in_draw()){stats.d++;stats.s=0;toast('🤝 תיקו!','i');}
+
+function recordResult(isTimeout = false){
+  clearInterval(timerInt);
+  
+  if(isTimeout) {
+      const winner = (timeW <= 0) ? 'שחור' : 'לבן';
+      const myColor = pcol==='w' ? 'לבן' : 'שחור';
+      if(gmode === 'p2') toast(`⏰ הזמן נגמר! ${winner} ניצח`,'s');
+      else if(winner === myColor) { stats.w++; stats.s++; toast('🏆 הזמן של המחשב נגמר, ניצחת!','s'); playSound('win'); }
+      else { stats.l++; stats.s=0; toast('💀 נגמר לך הזמן, הפסדת','e'); playSound('lose'); }
+  } else {
+      if(game.in_checkmate()){
+          if(gmode==='p2'){const w=game.turn()==='w'?'שחור':'לבן';toast('🏆 '+w+' ניצח!','s'); playSound('win');}
+          else if(game.turn()!==pcol){stats.w++;stats.s++;toast('🏆 ניצחת!','s'); playSound('win');}
+          else{stats.l++;stats.s=0;toast('💀 הפסדת','e'); playSound('lose');}
+      }
+      else if(game.in_draw()){stats.d++;stats.s=0;toast('🤝 תיקו!','i');}
+  }
   stats.g++;saveLS();updateStUI();updateGameArchive();
 }
+
 function updateStUI(){document.getElementById('sw').textContent=stats.w;document.getElementById('sl').textContent=stats.l;document.getElementById('sd').textContent=stats.d;document.getElementById('sg').textContent=stats.g;document.getElementById('sm').textContent=stats.m;document.getElementById('ss').textContent=stats.s;}
 function resetStats(){if(!confirm('לאפס?'))return;stats={w:0,l:0,d:0,g:0,m:0,s:0};saveLS();updateStUI();toast('אופס','i');}
 
@@ -886,7 +1026,13 @@ function aiMove(){
   if(game.game_over()||game.turn()===pcol)return;
   showTh();
   setTimeout(()=>{
-    try{const best=getBest();if(best){const m=game.move({from:best.from,to:best.to,promotion:best.promotion||'q'});if(m){lastF=best.from;lastT=best.to;renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();updateGameArchive();moveSinceAnal++;if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}if(game.game_over())recordResult();}}}catch(e){console.warn(e);}
+    try{const best=getBest();if(best){const m=game.move({from:best.from,to:best.to,promotion:best.promotion||'q'});if(m){
+        lastF=best.from;lastT=best.to;
+        if(m.captured) playSound('capture'); else playSound('move');
+        renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();updateGameArchive();moveSinceAnal++;
+        if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}
+        if(game.game_over())recordResult();
+    }}}catch(e){console.warn(e);}
     hideTh();
   },10);
 }
@@ -902,20 +1048,30 @@ function delKey(i){document.getElementById('kr'+i)?.remove();if(apiKeys[i])apiKe
 function getKeys(){return apiKeys.filter(k=>k&&k.key&&k.status!=='fail');}
 
 // ═══════════════════════════════════════
-// GEMINI
+// GEMINI API
 // ═══════════════════════════════════════
 const GM='gemini-3.1-flash-lite-preview';
 const GURL=k=>'https://generativelanguage.googleapis.com/v1beta/models/'+GM+':generateContent?key='+k;
-async function callGemini(prompt,retries){
+
+// now payload can be either string (simple prompt) or array of contents (for chat)
+async function callGemini(payload,retries){
   retries=retries||0;
   const keys=getKeys();if(!keys.length)throw new Error('אין מפתחות API.');
   if(keyIdx>=keys.length)keyIdx=0;
   const ko=keys[keyIdx];const gi=apiKeys.findIndex(k=>k&&k.key===ko.key);
   document.querySelectorAll('.kdot').forEach(d=>d.classList.remove('act'));
   if(gi>=0)document.getElementById('kd'+gi)?.classList.add('act');
+  
+  let contents =[];
+  if(typeof payload === 'string') {
+      contents = [{parts:[{text: payload}]}];
+  } else {
+      contents = payload;
+  }
+
   try{
-    const res=await fetch(GURL(ko.key),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.4,maxOutputTokens:1200}})});
-    if(!res.ok){const err=await res.json().catch(()=>({}));if(res.status===429||res.status===403){if(gi>=0){apiKeys[gi].status='fail';document.getElementById('kd'+gi).className='kdot fail';}keyIdx++;if(retries<keys.length)return callGemini(prompt,retries+1);throw new Error('כל המפתחות הגיעו למגבלה.');}throw new Error((err.error&&err.error.message)||'שגיאה '+res.status);}
+    const res=await fetch(GURL(ko.key),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents: contents,generationConfig:{temperature:0.4,maxOutputTokens:1200}})});
+    if(!res.ok){const err=await res.json().catch(()=>({}));if(res.status===429||res.status===403){if(gi>=0){apiKeys[gi].status='fail';document.getElementById('kd'+gi).className='kdot fail';}keyIdx++;if(retries<keys.length)return callGemini(payload,retries+1);throw new Error('כל המפתחות הגיעו למגבלה.');}throw new Error((err.error&&err.error.message)||'שגיאה '+res.status);}
     const data=await res.json();const text=data.candidates?.[0]?.content?.parts?.[0]?.text;if(!text)throw new Error('תגובה ריקה');
     if(gi>=0){apiKeys[gi].status='ok';document.getElementById('kd'+gi).className='kdot ok';}saveLS();return text;
   }catch(e){if(gi>=0&&apiKeys[gi]&&apiKeys[gi].status!=='ok'){apiKeys[gi].status='fail';const el=document.getElementById('kd'+gi);if(el)el.className='kdot fail';}throw e;}
@@ -929,11 +1085,11 @@ function buildPrompt(lastMove){
 FEN: ${game.fen()}
 PGN: ${game.pgn()}
 החזר JSON בלבד (ללא כלום אחר!):[{"title":"כותרת","text":"הסבר קצר עברית","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]
+חשוב מאוד: אם ההסבר מורכב ממספר מהלכים (למשל סדרת אכילות), הקפד ליצור אובייקט נפרד לכל שלב במערך ה-JSON כך שניתן יהיה לדפדף ביניהם!
 כללים:
-- 3 שלבים
-- text: עברית פשוטה, 1-2 משפטים
-- highlight: מערך ריבועים (קטן+ספרה: e4, d5) או[]
-- arrows: מערך {from,to,color} (cyan/orange/green/red) או[]
+- text: עברית פשוטה
+- highlight: מערך ריבועים או[]
+- arrows: מערך {from,to,color} או[]
 - JSON תקני בלבד!`;
 }
 function parseSteps(raw){
@@ -953,7 +1109,6 @@ async function analyzeLastMove(){
     const steps=parseSteps(raw);
     box.innerHTML='<div class="aph" style="color:var(--grn)">✓ ניתוח מוכן</div>';
     
-    // שמירת ההסבר למשחק הנוכחי
     currentGameExpl[hist.length] = steps;
     updateGameArchive();
 
@@ -1030,11 +1185,11 @@ function newChat() {
 function renderActiveChat() {
     const msgs = document.getElementById('chatMsgs');
     msgs.innerHTML = '';
-    document.getElementById('chatTitleLbl').textContent = currentChatTitle === "צ'אט חדש" ? "🤖 צ'אט עם מאמן AI" : "💬 " + currentChatTitle;
+    document.getElementById('chatTitleLbl').textContent = currentChatTitle === "צ'אט חדש" ? "🤖 צ'אט AI" : "💬 " + currentChatTitle;
     
     if(currentChatMsgs.length === 0) {
         const d = document.createElement('div'); d.className='cmsg ai';
-        d.innerHTML='שלום! אני המאמן שלך 👋<br>שאל אותי כל שאלה על שחמט — פתיחות, טקטיקות, אסטרטגיה — ואדגים לך על הלוח!';
+        d.innerHTML='שלום! אני המאמן שלך 👋<br>אני זוכר את רמת המשחק שלך ואת מה שנדבר עליו. שאל אותי הכל!';
         msgs.appendChild(d);
     } else {
         currentChatMsgs.forEach(m => {
@@ -1043,7 +1198,7 @@ function renderActiveChat() {
             if(m.demo) {
                 const demBtn = document.createElement('button');
                 demBtn.className='chat-sug-btn'; demBtn.style.marginTop='7px'; demBtn.style.display='block';
-                demBtn.textContent='📍 הצג תרשים שחמט';
+                demBtn.textContent='📍 הדגם על הלוח';
                 demBtn.onclick=()=>{xsteps=m.demo;xidx=0;showXstep(0);document.getElementById('xpanel').style.display='block';if(!fsMode)tab('analysis');toast('הדגמה מוצגת','i');};
                 el.appendChild(demBtn);
             }
@@ -1077,6 +1232,11 @@ async function sendChat(){
   inp.value='';
   chatAsk(msg);
 }
+
+function askForTask() {
+    chatAsk("בהתאם להיסטוריה שלי והרמה שלי כפי שאתה מנתח אותה (ניצחונות, הפסדים, כמות משחקים), אנא תן לי משימה אישית, תרגיל או חידת שחמט לפתרון.");
+}
+
 async function chatAsk(msg){
   if(!getKeys().length){toast('הוסף מפתח Gemini בהגדרות','e');tab('setup');return;}
   if(currentChatMsgs.length === 0) currentChatTitle = msg.substring(0,25) + (msg.length>25?'...':'');
@@ -1087,15 +1247,34 @@ async function chatAsk(msg){
   const am=document.createElement('div');am.className='cmsg ai loading-msg';am.textContent='🤔 מחשב...';msgs.appendChild(am);
   msgs.scrollTop=msgs.scrollHeight;
   
-  const ctx=started?`\n\nמצב לוח נוכחי FEN: ${game.fen()}\nהיסטוריית מהלכים: ${game.pgn()||'טרם התחיל'}`:'';
-  const prompt=`אתה מאמן שחמט מנוסה שמלמד בעברית פשוטה.
-${ctx}
-הודעת המשתמש: "${msg}"
-ענה בעברית פשוטה. אם רלוונטי להדגים מהלך על הלוח, הוסף בסוף התשובה JSON של תרשים בפורמט:
-BOARD_DEMO:[{"title":"כותרת","text":"הסבר","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]END_DEMO
-אם אין צורך בהדגמה, אל תוסיף BOARD_DEMO.`;
+  const ctx=started?`מצב לוח נוכחי במשחק (FEN): ${game.fen()}\nהיסטוריית מהלכים נוכחית: ${game.pgn()||'טרם התחיל'}`:'(אין משחק פעיל ברקע כרגע)';
+  
+  // Building the comprehensive payload to remember history
+  let aiContents =[];
+  
+  // Inject the System Context (User Profile) into the first message secretly
+  const userProfile = `[הנחיות מערכת בלבד: אתה מאמן שחמט מנוסה בעברית. נתוני השחקן מולך: ${stats.g} משחקים שוחקו, ${stats.w} ניצחונות, ${stats.l} הפסדים, ${stats.d} תיקו. רצף נוכחי: ${stats.s}. התאם את ההסברים והמשימות שלך לרמת השחקן המשתקפת מהנתונים! הנה מצב הלוח הנוכחי לעזרתך: ${ctx}. חשוב: אם תרצה להדגים משהו (טקטיקה/חידה/מהלך), הוסף תמיד בסוף התשובה בלוק JSON בפורמט הזה בדיוק: BOARD_DEMO:[{"title":"שלב 1","text":"הסבר","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]END_DEMO. הקפד להחזיר מערך של מספר שלבים אם יש יותר ממהלך אחד ברצף!]`;
+  
+  // Add history to context
+  for(let i=0; i < currentChatMsgs.length; i++) {
+      let m = currentChatMsgs[i];
+      let txt = m.text;
+      if(i === 0 && m.role === 'user') txt = userProfile + "\n\nבקשת המשתמש: " + txt; // prepending system prompt
+      if(m.demo) txt += "\n[הוצגה הדגמה ויזואלית על הלוח]";
+      
+      // Ensure alternating roles for Gemini API (user, model, user, model)
+      const r = m.role === 'ai' ? 'model' : 'user';
+      
+      // If same role in a row (e.g. error handling), combine them to avoid API 400 error
+      if(aiContents.length > 0 && aiContents[aiContents.length-1].role === r) {
+          aiContents[aiContents.length-1].parts[0].text += "\n\n" + txt;
+      } else {
+          aiContents.push({role: r, parts: [{text: txt}]});
+      }
+  }
+
   try{
-    const raw=await callGemini(prompt);
+    const raw=await callGemini(aiContents);
     let textPart=raw, demoSteps=null;
     const demoMatch=raw.match(/BOARD_DEMO:(\s*\[[\s\S]*?\]\s*)END_DEMO/);
     if(demoMatch){
@@ -1256,7 +1435,6 @@ function restoreData(e) {
             let restored = false;
             if(data.games && Array.isArray(data.games)) { gamesArchive = data.games; restored = true; }
             if(data.chats && Array.isArray(data.chats)) { chatsArchive = data.chats; restored = true; }
-            // תמיכה לאחור במידה והעלו קובץ שהיה רק של צ'אטים
             if(!restored && Array.isArray(data)) { chatsArchive = data; restored = true; }
             
             if(restored) {
@@ -1307,7 +1485,7 @@ function tab(name){
   const activeBtn = document.querySelectorAll('.ptab')[TABS.indexOf(name)];
   if(activeBtn) {
       activeBtn.classList.add('active');
-      activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); // מגולל אוטומטית לטאב אם הוא מוסתר
+      activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' }); 
   }
   if(name==='tutorial'){tutActive=true;applyTutBoard(tutIdx);}
   else if(tutActive){tutActive=false;clearTut();}

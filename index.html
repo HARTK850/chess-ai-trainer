@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>♟ מאמן שחמט AI</title>
+<title>♟ ניתוח מנצח - מאמן AI</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/chess.js@0.10.3/chess.js"></script>
 <style>
@@ -18,15 +18,13 @@
 html,body{height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
 body{background:var(--bg);color:var(--t1);display:flex;flex-direction:column}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 20% 20%,rgba(201,168,76,.04) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 80% 80%,rgba(61,214,245,.03) 0%,transparent 60%);pointer-events:none;z-index:0}
-
 /* ─── HEADER ─── */
 header{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;border-bottom:1px solid var(--brd);background:rgba(14,21,32,.98);backdrop-filter:blur(12px);z-index:100;flex-shrink:0;gap:8px}
 .logo{font-family:'Cinzel',serif;font-size:1.05rem;font-weight:800;background:linear-gradient(135deg,var(--goldl),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .logo-icon{-webkit-text-fill-color:initial;font-size:1.3rem}
 .hbtns{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-
 /* ─── BUTTONS ─── */
-.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:7px;border:none;font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:6px 12px;border-radius:7px;border:none;font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap}
 .btn-gold{background:linear-gradient(135deg,var(--gold),#a07830);color:#0e0a04;box-shadow:0 3px 12px rgba(201,168,76,.3)}
 .btn-gold:hover{transform:translateY(-1px);box-shadow:0 5px 20px rgba(201,168,76,.4)}
 .btn-out{background:transparent;color:var(--t2);border:1px solid var(--brd)}
@@ -38,29 +36,19 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .btn-danger{background:rgba(224,85,85,.1);color:var(--red);border:1px solid rgba(224,85,85,.3)}
 .btn-sm{padding:5px 10px;font-size:.72rem}
 .btn:disabled{opacity:.38;cursor:not-allowed;transform:none!important}
-
 /* ─── LAYOUT ─── */
 .app{display:grid;grid-template-columns:1fr 320px;flex:1;overflow:hidden;position:relative;z-index:1}
-
 /* ─── BOARD SECTION ─── */
-.bsec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 12px 12px;gap:7px;overflow:hidden}
-
-/* ─── BOARD CONTAINER ─── */
-/* The board-container holds coords + board in a tight flex */
+.bsec{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 12px 12px;gap:7px;overflow:hidden;position:relative}
 .board-container{display:flex;flex-direction:column;align-items:flex-start;flex-shrink:0}
 .board-row{display:flex;align-items:flex-start;flex-shrink:0}
-/* rank labels column */
 .rank-col{display:flex;flex-direction:column;justify-content:space-around;width:16px;flex-shrink:0}
 .rlbl{font-size:.56rem;color:var(--t3);font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center}
-/* the actual board wrapper – EXACTLY the size of the grid */
 .board-and-svg{position:relative;flex-shrink:0;line-height:0}
 .cboard{display:grid;grid-template-columns:repeat(8,1fr);border:3px solid #7a6030;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px #3a2e18,0 14px 44px rgba(0,0,0,.9),0 0 22px rgba(201,168,76,.14)}
-/* SVG sits INSIDE board-and-svg, same size as cboard, pointer-events:none */
 #arrowSvg{position:absolute;top:3px;left:3px;pointer-events:none;z-index:20;display:block}
-/* file labels row */
-.file-row{display:flex;margin-left:16px;flex-shrink:0}
+.file-row{display:flex;flex-shrink:0}
 .flbl{font-size:.56rem;color:var(--t3);font-weight:600;text-align:center}
-
 /* ─── SQUARES & PIECES ─── */
 .sq{display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;flex-shrink:0}
 .sq.light{background:var(--sq-l)}.sq.dark{background:var(--sq-d)}
@@ -76,7 +64,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .piece.w{color:var(--pw);text-shadow:0 0 3px #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000,0 2px 5px rgba(0,0,0,.65)}
 .piece.b{color:var(--pb);text-shadow:0 1px 2px rgba(255,255,255,.18),0 2px 4px rgba(0,0,0,.55)}
 .sq:not(.sel):hover .piece{transform:scale(1.1) translateY(-2px)}
-
 /* ─── STATUS / DIFF ─── */
 .sbar{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--brd);border-radius:9px;padding:8px 14px;width:100%;max-width:700px}
 .sdot{width:9px;height:9px;border-radius:50%;background:var(--grn);box-shadow:0 0 6px var(--grn);flex-shrink:0;animation:pg 2s infinite}
@@ -94,19 +81,14 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .bbtns{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;width:100%;max-width:700px}
 .caprow{display:flex;gap:1px;flex-wrap:wrap;min-height:17px;font-size:.9rem}
 .sdiff{font-size:.66rem;color:var(--gold);font-weight:700;min-width:18px}
-
-/* EVAL BAR */
 .evalwrap{display:flex;flex-direction:column;align-items:center;gap:3px;margin-right:5px;flex-shrink:0}
 .evalbar{width:9px;flex:1;min-height:60px;background:var(--brd);border-radius:4px;position:relative;overflow:hidden}
 .evalf{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.82);transition:height .4s ease;border-radius:0 0 4px 4px}
 .evallb{font-size:.52rem;color:var(--t3);font-weight:600;writing-mode:vertical-rl;transform:rotate(180deg)}
-
-/* THINK OVERLAY */
 .thov{display:none;position:absolute;inset:0;background:rgba(8,12,16,.5);border-radius:4px;align-items:center;justify-content:center;z-index:30;backdrop-filter:blur(2px)}
 .thov.on{display:flex}
 .spin{width:36px;height:36px;border:3px solid var(--brd);border-top-color:var(--gold);border-radius:50%;animation:spin .75s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
 /* ─── SIDE PANEL ─── */
 .spanel{border-left:1px solid var(--brd);background:var(--panel);display:flex;flex-direction:column;overflow:hidden}
 .ptabs{display:flex;border-bottom:1px solid var(--brd);background:var(--card);flex-shrink:0;overflow-x:auto}
@@ -134,8 +116,6 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .mcard .mi{font-size:1.25rem;display:block;margin-bottom:3px}
 .mcard.active{border-color:var(--goldd);background:rgba(201,168,76,.07);color:var(--gold)}
 .mcard:hover:not(.active){border-color:#3a2e18}
-
-/* ANALYSIS */
 .abox{background:var(--inp);border:1px solid var(--brd);border-radius:9px;padding:11px;margin-bottom:9px;min-height:60px;position:relative;overflow:hidden}
 .abox.loading::after{content:'';position:absolute;bottom:0;left:0;height:2px;width:40%;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:shim 1.5s infinite}
 @keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
@@ -145,21 +125,15 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .xtext{font-size:.8rem;line-height:1.65;color:var(--t1)}
 .xnav{display:flex;align-items:center;gap:6px;margin-top:8px}
 .xcnt{font-size:.7rem;color:var(--t3);flex:1;text-align:center}
-
-/* MOVES */
 .mgrid{display:grid;grid-template-columns:22px 1fr 1fr;gap:1px;font-size:.75rem}
 .mnum{color:var(--t3);padding:3px 0;font-size:.66rem;display:flex;align-items:center}
 .mcell{padding:3px 4px;border-radius:4px;cursor:pointer;transition:background .1s;font-family:monospace}
 .mcell:hover{background:var(--inp)}
 .mcell.cur{background:rgba(201,168,76,.15);color:var(--gold)}
-
-/* STATS */
 .stgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:9px}
 .stcard{background:var(--inp);border:1px solid var(--brd);border-radius:7px;padding:9px;text-align:center}
 .stval{font-size:1.2rem;font-weight:700;color:var(--gold);display:block}
 .stlbl{font-size:.61rem;color:var(--t3);margin-top:2px}
-
-/* THEME */
 .tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:9px}
 .tsw{border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:all .2s;aspect-ratio:1}
 .tsw.active{border-color:var(--gold);box-shadow:0 0 10px rgba(201,168,76,.35)}
@@ -170,15 +144,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .pscard:hover:not(.active){border-color:#3a2e18}
 .psprev{font-size:1.3rem;display:block;margin-bottom:2px;line-height:1}
 .psname{font-size:.59rem;color:var(--t3)}
-
-/* TUTORIAL */
 .tut-box{background:var(--inp);border:1px solid var(--brd);border-radius:9px;padding:13px;margin-bottom:9px}
 .tut-title{font-size:.78rem;font-weight:600;color:var(--goldl);margin-bottom:5px}
 .tut-text{font-size:.77rem;line-height:1.62;color:var(--t2)}
 .tut-hint{font-size:.69rem;color:var(--cyan);margin-top:5px;padding:5px 8px;background:rgba(61,214,245,.07);border-radius:5px;border-left:2px solid var(--cyan)}
 .tut-nav{display:flex;align-items:center;gap:6px;margin-top:8px}
 .tut-cnt{flex:1;text-align:center;font-size:.69rem;color:var(--t3)}
-
 /* CHAT */
 .chat-msgs{height:280px;overflow-y:auto;border:1px solid var(--brd);border-radius:9px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px;background:var(--inp)}
 .chat-msgs::-webkit-scrollbar{width:3px}
@@ -194,16 +165,12 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .chat-suggest{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px}
 .chat-sug-btn{padding:4px 9px;border-radius:15px;font-size:.66rem;background:rgba(201,168,76,.08);border:1px solid var(--goldd);color:var(--gold);cursor:pointer;transition:all .15s;font-family:'Outfit',sans-serif}
 .chat-sug-btn:hover{background:rgba(201,168,76,.16)}
-
-/* TOASTS */
 .twrap{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:5px;pointer-events:none}
 .toast{padding:8px 15px;border-radius:8px;font-size:.78rem;font-weight:500;backdrop-filter:blur(12px);animation:tin .3s ease;max-width:300px;text-align:center}
 .te{background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.4);color:#f08080}
 .ts{background:rgba(76,175,125,.15);border:1px solid rgba(76,175,125,.4);color:#7ed4aa}
 .ti{background:rgba(61,214,245,.1);border:1px solid rgba(61,214,245,.3);color:var(--cyan)}
 @keyframes tin{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-
-/* MODAL */
 .mov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(5px)}
 .mov.on{display:flex}
 .modal{background:var(--card);border:1px solid var(--brd);border-radius:14px;padding:20px;max-width:580px;width:100%;max-height:85vh;overflow-y:auto;position:relative}
@@ -212,16 +179,13 @@ header{display:flex;align-items:center;justify-content:space-between;padding:8px
 .mclose:hover{color:var(--t1)}
 .mbody{font-size:.81rem;line-height:1.75;color:var(--t2);white-space:pre-wrap}
 .mload{display:flex;align-items:center;justify-content:center;gap:10px;padding:28px 0;color:var(--t3);font-size:.81rem}
-
-/* ─── FULLSCREEN ─── */
 body.fs-mode .spanel{display:none}
 body.fs-mode .app{grid-template-columns:1fr}
 body.fs-mode .bsec{padding:8px 8px 8px}
-/* fs analysis overlay */
 #fsAnal{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:linear-gradient(to top,rgba(8,12,16,.97) 0%,rgba(8,12,16,.8) 80%,transparent 100%);padding:10px 20px 14px;max-height:36vh;overflow-y:auto}
 #fsAnal .inner{max-width:700px;margin:0 auto}
-
-/* RESPONSIVE */
+.rev-banner{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;padding:6px 14px;border-radius:20px;font-weight:700;font-size:.8rem;z-index:50;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.5);display:none;align-items:center;gap:6px;}
+.rev-banner:hover{background:var(--goldl);}
 @media(max-width:900px){
   html,body{overflow:auto}
   .app{grid-template-columns:1fr;overflow:visible}
@@ -233,89 +197,69 @@ body.fs-mode .bsec{padding:8px 8px 8px}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="logo"><span class="logo-icon">♟</span>מאמן שחמט AI</div>
+  <div class="logo"><span class="logo-icon">♟</span>ניתוח מנצח</div>
   <div class="hbtns">
     <button class="btn btn-out btn-sm" onclick="confirmNew()">⟳ חדש</button>
     <button class="btn btn-out btn-sm" onclick="openFullAnal()">📊 נתח</button>
     <button class="btn btn-gold btn-sm" id="fsBtn" onclick="toggleFS()">⛶ מסך מלא</button>
   </div>
 </header>
-
 <div class="app" id="appGrid">
-
-  <!-- BOARD SECTION -->
   <section class="bsec" id="bsec">
-
+    <div class="rev-banner" id="revBanner" onclick="exitReviewMode()">👀 מצב צפייה - חזור למשחק הנוכחי</div>
     <div style="width:100%;display:flex;align-items:center;gap:6px;min-height:16px">
       <span class="sdiff" id="sBlack"></span><div class="caprow" id="capBlack"></div>
     </div>
-
-    <!-- Board container: eval-bar | ranks | board+svg | file-row -->
-    <div class="board-container" id="boardContainer">
+    <!-- חשוב: dir="ltr" פותר את בעיית כיוון החיצים והמיקומים מול SVG -->
+    <div class="board-container" id="boardContainer" dir="ltr">
       <div class="board-row">
-        <!-- eval bar -->
         <div class="evalwrap">
           <div class="evallb">±</div>
-          <div class="evalbar" id="evalbar">
-            <div id="evalf" class="evalf" style="height:50%"></div>
-          </div>
+          <div class="evalbar" id="evalbar"><div id="evalf" class="evalf" style="height:50%"></div></div>
         </div>
-        <!-- rank labels -->
         <div class="rank-col" id="rankCol"></div>
-        <!-- board + svg overlay -->
         <div class="board-and-svg" id="boardAndSvg">
           <div id="board" class="cboard"></div>
-          <!--
-            ARROW SVG: injected by JS, sized EXACTLY to board inner pixels,
-            positioned at top:3px left:3px to skip the border.
-          -->
-          <svg id="arrowSvg" xmlns="http://www.w3.org/2000/svg"
-               style="position:absolute;top:3px;left:3px;pointer-events:none;z-index:20;overflow:visible;display:block"></svg>
+          <svg id="arrowSvg" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:3px;left:3px;pointer-events:none;z-index:20;overflow:visible;display:block"></svg>
           <div class="thov" id="thov"><div class="spin"></div></div>
         </div>
       </div>
-      <div class="file-row" id="fileRow"></div>
+      <div class="file-row" id="fileRow">
+         <!-- רווח שיאזן את עמודת הדירוג ובר ההערכה שמשמאל -->
+         <div style="width:25px;flex-shrink:0"></div>
+         <div id="fileLabels" style="display:flex;flex:1;"></div>
+      </div>
     </div>
-
     <div style="width:100%;display:flex;align-items:center;gap:6px;min-height:16px">
       <span class="sdiff" id="sWhite"></span><div class="caprow" id="capWhite"></div>
     </div>
-
     <div class="sbar" id="sbar">
       <div class="sdot" id="sdot"></div>
       <div class="stxt" id="stxt">לחץ "התחל משחק"</div>
       <div class="tbdg" id="tbdg">♙ לבן</div>
     </div>
-
     <div class="dctrl" id="dctrl">
       <span class="dlbl">רמת קושי</span>
-      <input type="range" class="dslider" id="dsl" min="1" max="20" value="5"
-        oninput="document.getElementById('dval').textContent=this.value;saveLS()">
+      <input type="range" class="dslider" id="dsl" min="1" max="20" value="5" oninput="document.getElementById('dval').textContent=this.value;saveLS()">
       <span class="dval" id="dval">5</span>
     </div>
-
     <div class="bbtns">
       <button class="btn btn-out btn-sm" onclick="flipBoard()">↕ הפוך</button>
       <button class="btn btn-cyan btn-sm" onclick="analyzePos()">🧠 נתח עמדה</button>
     </div>
-
   </section>
-
-  <!-- SIDE PANEL -->
   <aside class="spanel" id="spanel">
     <div class="ptabs">
       <button class="ptab active" onclick="tab('setup')">⚙ הגדרות</button>
+      <button class="ptab" onclick="tab('history')">📋 היסטוריה</button>
       <button class="ptab" onclick="tab('analysis')">🧠 ניתוח</button>
       <button class="ptab" onclick="tab('chat')">💬 צ'אט AI</button>
-      <button class="ptab" onclick="tab('history')">📋 מהלכים</button>
       <button class="ptab" onclick="tab('themes')">🎨 עיצוב</button>
       <button class="ptab" onclick="tab('tutorial')">📖 מדריך</button>
-      <button class="ptab" onclick="tab('stats')">📈 סטטיסטיקה</button>
+      <button class="ptab" onclick="tab('stats')">📈 נתונים</button>
     </div>
     <div class="pcnt">
-
       <!-- SETUP -->
       <div class="tpane active" id="tab-setup">
         <div class="slbl">סוג משחק</div>
@@ -336,7 +280,53 @@ body.fs-mode .bsec{padding:8px 8px 8px}
         </div>
         <button class="btn btn-gold" style="width:100%" onclick="startGame()">▶ התחל משחק</button>
       </div>
+      <!-- HISTORY (GAMES & CHATS) -->
+      <div class="tpane" id="tab-history">
+        <div style="display:flex; gap:5px; margin-bottom:12px;">
+           <button class="btn btn-cyan btn-sm" style="flex:1" id="btnTabGames" onclick="switchHist('games')">🎮 משחקים</button>
+           <button class="btn btn-out btn-sm" style="flex:1" id="btnTabChats" onclick="switchHist('chats')">💬 צ'אטים</button>
+        </div>
+        
+        <!-- GAMES VIEW -->
+        <div id="histGamesPane">
+           <div class="slbl">מהלכי המשחק הנוכחי</div>
+           <div class="mgrid" id="mgrid" style="max-height:130px;overflow-y:auto;margin-bottom:12px;border-bottom:1px solid var(--brd);padding-bottom:5px;">
+              <div style="grid-column:1/-1;text-align:center;color:var(--t3);font-size:.73rem;padding:14px 0">המשחק טרם התחיל...</div>
+           </div>
+           <div class="slbl">משחקים קודמים (לחץ לצפייה)</div>
+           <div id="gamesArchiveList" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
 
+        <!-- CHATS VIEW -->
+        <div id="histChatsPane" style="display:none;">
+           <div style="display:flex; gap:5px; margin-bottom:12px; flex-wrap:wrap;">
+              <button class="btn btn-gold btn-sm" onclick="newChat()" style="flex:1">➕ חדש</button>
+              <button class="btn btn-out btn-sm" onclick="backupChats()">💾 גיבוי</button>
+              <label class="btn btn-out btn-sm" style="margin:0;cursor:pointer;">
+                 📂 העלאה <input type="file" style="display:none" accept=".json" onchange="restoreChats(event)">
+              </label>
+           </div>
+           <div class="slbl">היסטוריית הצ'אטים שלך</div>
+           <div id="chatsArchiveList" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+
+        <!-- REVIEW CONTROLS (Shows when a game is selected) -->
+        <div id="histReviewPane" style="display:none;">
+           <div class="slbl" style="color:var(--gold)">צפייה במשחק עבר</div>
+           <div style="display:flex; gap:5px; margin-bottom:12px; align-items:center;">
+              <button class="btn btn-cyan btn-sm" onclick="revMove(-1)">◀ קודם</button>
+              <span id="revMoveText" style="flex:1; text-align:center; font-size:.75rem; color:var(--t1)"></span>
+              <button class="btn btn-cyan btn-sm" onclick="revMove(1)">הבא ▶</button>
+           </div>
+           <button class="btn btn-danger btn-sm" style="width:100%; margin-bottom:12px;" onclick="exitReviewMode()">✕ יציאה ממצב צפייה</button>
+           
+           <div id="revExpl" class="xpanel-box" style="display:none;">
+              <div class="xtitle" id="revExplTitle"></div>
+              <div class="xtext" id="revExplText"></div>
+              <button class="btn btn-out btn-sm" style="width:100%; margin-top:8px" onclick="showRevDemo()">📍 הצג תרשים על הלוח</button>
+           </div>
+        </div>
+      </div>
       <!-- ANALYSIS -->
       <div class="tpane" id="tab-analysis">
         <div class="slbl">ניתוח מהלך</div>
@@ -360,13 +350,13 @@ body.fs-mode .bsec{padding:8px 8px 8px}
           <div id="bmove" style="font-size:.7rem;color:var(--t3);margin-top:2px">מהלך מומלץ: —</div>
         </div>
       </div>
-
       <!-- CHAT -->
       <div class="tpane" id="tab-chat">
-        <div class="slbl">🤖 צ'אט עם מאמן AI</div>
-        <div class="chat-msgs" id="chatMsgs">
-          <div class="cmsg ai">שלום! אני המאמן שלך 👋<br>שאל אותי כל שאלה על שחמט — פתיחות, טקטיקות, אסטרטגיה — ואדגים לך על הלוח!</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+           <div class="slbl" style="margin:0" id="chatTitleLbl">🤖 צ'אט עם מאמן AI</div>
+           <button class="btn btn-ghost btn-sm" onclick="newChat()">➕ צ'אט חדש</button>
         </div>
+        <div class="chat-msgs" id="chatMsgs"></div>
         <div class="chat-suggest" id="chatSuggests">
           <button class="chat-sug-btn" onclick="chatAsk('למד אותי על פתיחת מלך e4')">פתיחת e4</button>
           <button class="chat-sug-btn" onclick="chatAsk('מהי הפתיחה הסיציליאנית?')">סיציליאנית</button>
@@ -380,15 +370,6 @@ body.fs-mode .bsec{padding:8px 8px 8px}
           <button class="btn btn-cyan btn-sm" onclick="sendChat()" style="height:36px;align-self:flex-end">שלח</button>
         </div>
       </div>
-
-      <!-- HISTORY -->
-      <div class="tpane" id="tab-history">
-        <div class="slbl">היסטוריית מהלכים</div>
-        <div class="mgrid" id="mgrid">
-          <div style="grid-column:1/-1;text-align:center;color:var(--t3);font-size:.73rem;padding:14px 0">המשחק טרם התחיל...</div>
-        </div>
-      </div>
-
       <!-- THEMES -->
       <div class="tpane" id="tab-themes">
         <div class="slbl">צבע לוח</div>
@@ -402,7 +383,6 @@ body.fs-mode .bsec{padding:8px 8px 8px}
         <div class="slbl">צבע כלים שחורים</div>
         <div style="display:flex;gap:5px;flex-wrap:wrap" id="bpcol"></div>
       </div>
-
       <!-- TUTORIAL -->
       <div class="tpane" id="tab-tutorial">
         <div class="slbl">📖 מדריך לשחמט</div>
@@ -418,7 +398,6 @@ body.fs-mode .bsec{padding:8px 8px 8px}
         </div>
         <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:7px" onclick="clearTut()">✕ סגור מדריך</button>
       </div>
-
       <!-- STATS -->
       <div class="tpane" id="tab-stats">
         <div class="slbl">סטטיסטיקות</div>
@@ -438,7 +417,6 @@ body.fs-mode .bsec{padding:8px 8px 8px}
     </div>
   </aside>
 </div>
-
 <!-- FS ANALYSIS OVERLAY -->
 <div id="fsAnal">
   <div class="inner">
@@ -457,7 +435,6 @@ body.fs-mode .bsec{padding:8px 8px 8px}
     </div>
   </div>
 </div>
-
 <!-- MODAL -->
 <div class="mov" id="analModal">
   <div class="modal">
@@ -467,18 +444,17 @@ body.fs-mode .bsec{padding:8px 8px 8px}
   </div>
 </div>
 <div class="twrap" id="twrap"></div>
-
 <script>
 // ═══════════════════════════════════════
-//  PIECE SETS & THEMES
+// PIECE SETS & THEMES
 // ═══════════════════════════════════════
 const PSETS={
   classic:{name:'קלאסי', wK:'♔',wQ:'♕',wR:'♖',wB:'♗',wN:'♘',wP:'♙',bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'},
-  filled: {name:'מלא',   wK:'♚',wQ:'♛',wR:'♜',wB:'♝',wN:'♞',wP:'♟',bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'},
+  filled: {name:'מלא', wK:'♚',wQ:'♛',wR:'♜',wB:'♝',wN:'♞',wP:'♟',bK:'♚',bQ:'♛',bR:'♜',bB:'♝',bN:'♞',bP:'♟'},
   modern: {name:'מודרני',wK:'⊕',wQ:'◈',wR:'▣',wB:'◇',wN:'◉',wP:'●',bK:'⊕',bQ:'◈',bR:'▣',bB:'◇',bN:'◉',bP:'●'},
-  round:  {name:'עגול',  wK:'⬡',wQ:'⬢',wR:'⬠',wB:'⬟',wN:'⬤',wP:'◦',bK:'⬡',bQ:'⬢',bR:'⬠',bB:'⬟',bN:'⬤',bP:'◦'},
+  round: {name:'עגול', wK:'⬡',wQ:'⬢',wR:'⬠',wB:'⬟',wN:'⬤',wP:'◦',bK:'⬡',bQ:'⬢',bR:'⬠',bB:'⬟',bN:'⬤',bP:'◦'},
   minimal:{name:'אותיות',wK:'K', wQ:'Q',wR:'R',wB:'B',wN:'N',wP:'p', bK:'K', bQ:'Q',bR:'R',bB:'B',bN:'N',bP:'p'},
-  geo:    {name:'גיאומטרי',wK:'◆',wQ:'◇',wR:'▲',wB:'△',wN:'★',wP:'•',bK:'◆',bQ:'◇',bR:'▲',bB:'△',bN:'★',bP:'•'},
+  geo: {name:'גיאומטרי',wK:'◆',wQ:'◇',wR:'▲',wB:'△',wN:'★',wP:'•',bK:'◆',bQ:'◇',bR:'▲',bB:'△',bN:'★',bP:'•'},
 };
 const BGT=[
   {id:'classic',nm:'קלאסי',l:'#f0d9b5',d:'#b58863'},{id:'blue',nm:'ים',l:'#dde6eb',d:'#6e92a3'},
@@ -489,7 +465,6 @@ const BGT=[
 const WPC=[{id:'white',l:'לבן',v:'#ffffff'},{id:'cream',l:'קרם',v:'#fdf5e6'},{id:'yellow',l:'צהוב',v:'#ffe066'},{id:'gold',l:'זהב',v:'#c9a84c'},{id:'silver',l:'כסף',v:'#c0c0c0'},{id:'cyan',l:'ציאן',v:'#3dd6f5'}];
 const BPC=[{id:'black',l:'שחור',v:'#111111'},{id:'navy',l:'כחול',v:'#1a2a5e'},{id:'brown',l:'חום',v:'#5c3317'},{id:'red2',l:'אדום',v:'#8b0000'},{id:'forest',l:'ירוק',v:'#1a3a1a'},{id:'purp',l:'סגול',v:'#4a1a6e'}];
 const FILES=['a','b','c','d','e','f','g','h'];
-
 const TUT_STEPS=[
   {title:'ברוכים הבאים לשחמט!',text:'שחמט הוא משחק בין שני שחקנים. כל שחקן מתחיל עם 16 כלים. המטרה: לתת שח ומט למלך היריב — כלומר לאיים עליו כך שאין לו מוצא.',hint:'הלוח: 64 ריבועים, 8 שורות ו-8 עמודות.',highlights:['e1','e8','d1','d8'],arrows:[]},
   {title:'תנועת הרגלים ♙',text:'רגלים זזים קדימה ריבוע אחד (או שניים במהלך הראשון). הם אוכלים באלכסון קדימה.',hint:'רגל שמגיע לקצה הלוח הופך לכל כלי שרוצים!',highlights:['e2','e4','d5'],arrows:[{from:'e2',to:'e4',color:'orange'},{from:'e4',to:'d5',color:'green'}]},
@@ -501,11 +476,11 @@ const TUT_STEPS=[
   {title:'רוקדה 🏰',text:'המלך זז שני ריבועים לכיוון הצריח, והצריח קופץ לצד השני. זהו המהלך היחיד שמזיז שני כלים בבת אחת!',hint:'תנאים: המלך והצריח לא זזו, אין כלים ביניהם, המלך לא בשח.',highlights:['e1','g1','f1','h1'],arrows:[{from:'e1',to:'g1',color:'orange'},{from:'h1',to:'f1',color:'cyan'}]},
   {title:'טיפ: שלוט במרכז!',text:'כלים במרכז שולטים על יותר ריבועים. הזז e2→e4 ו-d2→d4 בתחילת המשחק.',hint:'מנצח שמשחק מהמרכז, לא מהצדדים.',highlights:['d4','d5','e4','e5'],arrows:[{from:'e2',to:'e4',color:'orange'},{from:'d2',to:'d4',color:'orange'}]},
 ];
-
 // ═══════════════════════════════════════
-//  STATE
+// STATE
 // ═══════════════════════════════════════
-let game=new Chess();
+let game = new Chess();
+let activeGame = game; // References the main playing board
 let gmode='normal',pcol='w',flipped=false;
 let started=false,autoAnal=false;
 let selSq=null,legal=[];
@@ -518,8 +493,25 @@ let xsteps=[],xidx=0;
 let tutIdx=0,tutActive=false;
 let moveSinceAnal=0;
 
+// GAME ARCHIVE & REVIEW
+let gamesArchive =[];
+let currentGameId = Date.now();
+let currentGameExpl = {}; // stores AI explanations for current game by move index
+let reviewMode = false;
+let reviewGameInstance = new Chess();
+let reviewHistory =[];
+let reviewMoveIndex = 0;
+let reviewGameObj = null;
+
+// CHATS ARCHIVE
+let chatsArchive =[];
+let currentChatId = Date.now();
+let currentChatTitle = "צ'אט חדש";
+let currentChatStarred = false;
+let currentChatMsgs =[];
+
 // ═══════════════════════════════════════
-//  LOCAL STORAGE
+// LOCAL STORAGE
 // ═══════════════════════════════════════
 const LSK='cai_k6',LSS='cai_s6',LSP='cai_p6';
 function saveLS(){try{localStorage.setItem(LSK,JSON.stringify(apiKeys.filter(k=>k&&k.key).map(k=>k.key)));localStorage.setItem(LSS,JSON.stringify(stats));localStorage.setItem(LSP,JSON.stringify({gmode,pcol,diff:document.getElementById('dsl').value,pset,bgtheme,pwcol,pbcol}));}catch(e){}}
@@ -529,13 +521,17 @@ function loadLS(){
     const s=JSON.parse(localStorage.getItem(LSS)||'null');if(s)stats={...stats,...s};
     const p=JSON.parse(localStorage.getItem(LSP)||'null');
     if(p){if(p.gmode)setMode(p.gmode);if(p.pcol)setCol(p.pcol);if(p.diff){document.getElementById('dsl').value=p.diff;document.getElementById('dval').textContent=p.diff;}if(p.pset)pset=p.pset;if(p.bgtheme)applyBG(p.bgtheme);if(p.pwcol)applyPC('w',p.pwcol);if(p.pbcol)applyPC('b',p.pbcol);}
+    gamesArchive = JSON.parse(localStorage.getItem('cai_games') || '[]');
+    chatsArchive = JSON.parse(localStorage.getItem('cai_chats') || '[]');
   }catch(e){}
   if(!apiKeys.length)addKey();
   updateStUI();refreshThUI();
+  renderGamesList(); renderChatsList();
+  if(currentChatMsgs.length === 0) renderActiveChat(); // welcome message
 }
 
 // ═══════════════════════════════════════
-//  INIT
+// INIT
 // ═══════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
   buildThUI();
@@ -546,10 +542,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('analModal').addEventListener('click',e=>{if(e.target===document.getElementById('analModal'))closeModal();});
 });
 function onResize(){calcSQ();buildBoard();buildCoords();renderBoard();if(xsteps.length)showXstep(xidx);if(tutActive)applyTutBoard(tutIdx);}
-
-// ═══════════════════════════════════════
-//  FULLSCREEN
-// ═══════════════════════════════════════
 function toggleFS(){
   fsMode=!fsMode;
   document.body.classList.toggle('fs-mode',fsMode);
@@ -559,94 +551,49 @@ function toggleFS(){
 }
 
 // ═══════════════════════════════════════
-//  SQUARE SIZE — fit exactly in viewport
+// SQUARE SIZE & COORDS (WITH LTR FIX)
 // ═══════════════════════════════════════
 function calcSQ(){
   const hh=document.querySelector('header').offsetHeight;
   const vw=window.innerWidth,vh=window.innerHeight;
-  // bottom chrome: status(~44) + diff(~44) + btns(~38) + caprows(~36) + gaps(~50)
   const bottomChrome=212;
-  // left chrome: rank labels(16) + eval bar(~22)
   const leftChrome=38;
   let aw,ah;
-  if(fsMode){
-    aw=vw-leftChrome-20;
-    ah=vh-hh-bottomChrome+60; // more space in fs
-  }else{
-    const panelW=document.getElementById('spanel').offsetWidth||320;
-    aw=vw-panelW-leftChrome-40;
-    ah=vh-hh-bottomChrome;
-  }
+  if(fsMode){aw=vw-leftChrome-20;ah=vh-hh-bottomChrome+60;}
+  else{const panelW=document.getElementById('spanel').offsetWidth||320;aw=vw-panelW-leftChrome-40;ah=vh-hh-bottomChrome;}
   SQ=Math.floor(Math.min(aw,ah)/8);
   SQ=Math.max(36,Math.min(SQ,90));
 }
 
-// ═══════════════════════════════════════
-//  COORDINATE SYSTEM
-//
-//  The board div is SQ*8 x SQ*8 pixels.
-//  The SVG is positioned at top:3px left:3px (border width)
-//  and is also SQ*8 x SQ*8.
-//
-//  algToSvgCenter(alg):
-//    Given algebraic square (e.g. "e4"), returns the CENTER
-//    of that square in SVG coordinates (0,0 = top-left of inner board).
-//
-//  Visual layout (normal, white at bottom):
-//    rank8 = visual row 0 (top)
-//    rank1 = visual row 7 (bottom)
-//    file a = visual col 0 (left) ... but RTL page, so LEFT of board
-//
-//  When flipped (black at bottom):
-//    rank1 = visual row 0 (top)
-//    rank8 = visual row 7 (bottom)
-//    file h = visual col 0 (left)
-// ═══════════════════════════════════════
-function algToSvgCenter(alg){
-  // alg: "a"-"h" + "1"-"8"
-  const fileIdx = alg.charCodeAt(0) - 97; // a=0 .. h=7
-  const rankIdx = parseInt(alg[1]) - 1;   // rank1=0 .. rank8=7
+// Fixed LTR mappings: CSS Grid is LTR now! So col=0 is perfectly Left.
+function sqAlg(row, col){
+  // Non-flipped: row 0 (top) = rank 8. col 0 (left) = file a.
+  // Flipped: row 0 (top) = rank 1. col 0 (left) = file h.
+  const r = flipped ? row + 1 : 8 - row;
+  const c = flipped ? FILES[7 - col] : FILES[col];
+  return c + r;
+}
 
+function algToSvgCenter(alg){
+  const fileIdx = alg.charCodeAt(0) - 97; // a=0 .. h=7
+  const rankIdx = parseInt(alg[1]) - 1; // 1=0 .. 8=7
   let visualCol, visualRow;
   if(!flipped){
-    // white bottom: a-file is LEFT col, rank8 is TOP row
-    visualCol = fileIdx;      // a=0(left), h=7(right)
-    visualRow = 7 - rankIdx;  // rank8=row0(top), rank1=row7(bottom)
+    visualCol = fileIdx; // 'a' is left (0)
+    visualRow = 7 - rankIdx; // '8' is top (0)
   } else {
-    // black bottom: h-file is LEFT col, rank1 is TOP row
-    visualCol = 7 - fileIdx;  // h=0(left), a=7(right)
-    visualRow = rankIdx;      // rank1=row0(top), rank8=row7(bottom)
+    visualCol = 7 - fileIdx; // 'h' is left (0)
+    visualRow = rankIdx; // '1' is top (0)
   }
-
-  return {
-    x: visualCol * SQ + SQ / 2,
-    y: visualRow * SQ + SQ / 2
-  };
+  return { x: visualCol * SQ + SQ / 2, y: visualRow * SQ + SQ / 2 };
 }
 
-// sqAlg: maps grid position (row,col) back to algebraic — used when building the DOM
-function sqAlg(row, col){
-  if(!flipped){
-    // row 0 = rank8, col 0 = file a
-    return FILES[col] + (8 - row);
-  } else {
-    // row 0 = rank1, col 0 = file h
-    return FILES[7 - col] + (row + 1);
-  }
-}
-
-// ═══════════════════════════════════════
-//  BUILD BOARD (DOM squares)
-// ═══════════════════════════════════════
 function buildBoard(){
   const el=document.getElementById('board');
   el.innerHTML='';
   el.style.cssText='grid-template-columns:repeat(8,'+SQ+'px);width:'+(SQ*8)+'px;height:'+(SQ*8)+'px';
-  // Ensure SVG is correct size (SQ*8 x SQ*8, positioned over inner board)
   const svg=document.getElementById('arrowSvg');
-  svg.style.width=(SQ*8)+'px';
-  svg.style.height=(SQ*8)+'px';
-  // top:3px left:3px already set in HTML to skip the 3px border
+  svg.style.width=(SQ*8)+'px'; svg.style.height=(SQ*8)+'px';
   for(let r=0;r<8;r++){
     for(let c=0;c<8;c++){
       const id=sqAlg(r,c);
@@ -662,7 +609,6 @@ function buildBoard(){
 }
 
 function buildCoords(){
-  // rank labels
   const rc=document.getElementById('rankCol');
   rc.innerHTML='';
   const ranks=flipped?[1,2,3,4,5,6,7,8]:[8,7,6,5,4,3,2,1];
@@ -671,22 +617,19 @@ function buildCoords(){
     d.className='rlbl';d.style.height=SQ+'px';d.textContent=r;
     rc.appendChild(d);
   });
-  // file labels
-  const fc=document.getElementById('fileRow');
+  const fc=document.getElementById('fileLabels');
   fc.innerHTML='';
-  // offset for eval bar + rank labels
   const fls=flipped?['h','g','f','e','d','c','b','a']:['a','b','c','d','e','f','g','h'];
   fls.forEach(f=>{
     const d=document.createElement('div');
     d.className='flbl';d.style.width=SQ+'px';d.textContent=f;
     fc.appendChild(d);
   });
-  // update eval bar height
   document.getElementById('evalbar').style.height=(SQ*8)+'px';
 }
 
-function renderBoard(){
-  const pos=game.board();
+function renderBoard(instance = game){
+  const pos=instance.board();
   clearHL();
   const set=PSETS[pset]||PSETS.classic;
   for(let r=0;r<8;r++){
@@ -700,24 +643,28 @@ function renderBoard(){
       if(p){const sp=document.createElement('span');sp.className='piece '+p.color;sp.textContent=set[p.color+p.type.toUpperCase()]||'?';el.appendChild(sp);}
     }
   }
-  if(game.in_check()){const ks=findKing(game.turn());if(ks)document.getElementById('sq_'+ks)?.classList.add('chk');}
-  if(lastF)document.getElementById('sq_'+lastF)?.classList.add('hl-f');
-  if(lastT)document.getElementById('sq_'+lastT)?.classList.add('hl-t');
+  if(instance.in_check()){const ks=findKing(instance.turn(), instance);if(ks)document.getElementById('sq_'+ks)?.classList.add('chk');}
+  
+  if(instance === activeGame) {
+      if(lastF)document.getElementById('sq_'+lastF)?.classList.add('hl-f');
+      if(lastT)document.getElementById('sq_'+lastT)?.classList.add('hl-t');
+  } else {
+      const hist = instance.history({verbose:true});
+      if(hist.length > 0) {
+          const m = hist[hist.length-1];
+          document.getElementById('sq_'+m.from)?.classList.add('hl-f');
+          document.getElementById('sq_'+m.to)?.classList.add('hl-t');
+      }
+  }
 }
-
-function clearHL(){
-  document.querySelectorAll('.sq').forEach(s=>s.classList.remove('sel','hl-f','hl-t','lm','lc','chk','xsq','tut'));
-  clearArrows();
-}
-function findKing(col){const p=game.board();for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(p[r][c]&&p[r][c].type==='k'&&p[r][c].color===col)return FILES[c]+(r+1);return null;}
+function clearHL(){document.querySelectorAll('.sq').forEach(s=>s.classList.remove('sel','hl-f','hl-t','lm','lc','chk','xsq','tut'));clearArrows();}
+function findKing(col, instance){const p=instance.board();for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(p[r][c]&&p[r][c].type==='k'&&p[r][c].color===col)return FILES[c]+(r+1);return null;}
 function flipBoard(){flipped=!flipped;buildBoard();buildCoords();renderBoard();if(selSq)showLegal(selSq);if(xsteps.length)showXstep(xidx);if(tutActive)applyTutBoard(tutIdx);}
 
 // ═══════════════════════════════════════
-//  ARROWS — using algToSvgCenter
+// ARROWS
 // ═══════════════════════════════════════
-function initArrows(){
-  clearArrows();
-}
+function initArrows(){clearArrows();}
 function clearArrows(){
   const svg=document.getElementById('arrowSvg');
   svg.innerHTML='';
@@ -733,44 +680,32 @@ function clearArrows(){
   });
   svg.appendChild(defs);
 }
-
 function drawArrow(fa, ta, color){
   if(!fa||!ta||fa===ta)return;
   const MAP={cyan:'c',orange:'o',green:'g',red:'r'};
   const COLORS={c:'#3dd6f5',o:'#ff9900',g:'#44ff88',r:'#ff4444'};
   const k=MAP[color]||'c';
-
-  // Get SVG-space centers using the FIXED coordinate function
   const {x:fx, y:fy}=algToSvgCenter(fa);
   const {x:tx, y:ty}=algToSvgCenter(ta);
-
-  const dx=tx-fx, dy=ty-fy;
-  const len=Math.sqrt(dx*dx+dy*dy);
+  const dx=tx-fx, dy=ty-fy, len=Math.sqrt(dx*dx+dy*dy);
   if(len<2)return;
-
-  const ux=dx/len, uy=dy/len;
-  const startOff=SQ*0.25, endOff=SQ*0.3;
-
+  const ux=dx/len, uy=dy/len, startOff=SQ*0.25, endOff=SQ*0.3;
   const svg=document.getElementById('arrowSvg');
   const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-  line.setAttribute('x1', fx + ux*startOff);
-  line.setAttribute('y1', fy + uy*startOff);
-  line.setAttribute('x2', tx - ux*endOff);
-  line.setAttribute('y2', ty - uy*endOff);
-  line.setAttribute('stroke', COLORS[k]);
-  line.setAttribute('stroke-width', SQ*0.13);
-  line.setAttribute('stroke-linecap', 'round');
-  line.setAttribute('opacity', '0.88');
+  line.setAttribute('x1', fx + ux*startOff); line.setAttribute('y1', fy + uy*startOff);
+  line.setAttribute('x2', tx - ux*endOff); line.setAttribute('y2', ty - uy*endOff);
+  line.setAttribute('stroke', COLORS[k]); line.setAttribute('stroke-width', SQ*0.13);
+  line.setAttribute('stroke-linecap', 'round'); line.setAttribute('opacity', '0.88');
   line.setAttribute('marker-end', 'url(#arr-'+k+')');
   svg.appendChild(line);
 }
-
 function hlSq(alg,cls){document.getElementById('sq_'+alg)?.classList.add(cls);}
 
 // ═══════════════════════════════════════
-//  CLICK / MOVE
+// GAMEPLAY
 // ═══════════════════════════════════════
 function onSq(sq){
+  if(reviewMode) return; // מניעת לחיצות בזמן מצב צפייה
   if(!started||game.game_over())return;
   if(gmode!=='p2'&&game.turn()!==pcol)return;
   if(selSq){
@@ -793,6 +728,7 @@ function doMove(from,to){
   const mv=game.move({from,to,promotion:'q'});if(!mv)return;
   lastF=from;lastT=to;
   renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();
+  updateGameArchive(); // שמירה לארכיון
   moveSinceAnal++;
   if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}
   if(!game.game_over()&&gmode!=='p2')setTimeout(aiMove,10);
@@ -800,7 +736,7 @@ function doMove(from,to){
 }
 
 // ═══════════════════════════════════════
-//  STATUS & EVAL
+// STATUS & CAPTURES
 // ═══════════════════════════════════════
 function updateSt(){
   const dot=document.getElementById('sdot'),txt=document.getElementById('stxt'),bdg=document.getElementById('tbdg');
@@ -819,10 +755,6 @@ function updateEvalBar(){
   fill.style.background=sc>=0?'rgba(255,255,255,.82)':'rgba(30,30,30,.9)';
   document.getElementById('evalTxt').textContent=sc>0?'+'+(sc/100).toFixed(1):(sc/100).toFixed(1);
 }
-
-// ═══════════════════════════════════════
-//  CAPTURED & HISTORY
-// ═══════════════════════════════════════
 const PV={p:1,n:3,b:3,r:5,q:9,k:0};
 function updCap(){
   const hist=game.history({verbose:true}),cW=[],cB=[];let sW=0,sB=0;
@@ -841,13 +773,15 @@ function updHist(){
 }
 
 // ═══════════════════════════════════════
-//  GAME CONTROL
+// GAME CONTROL
 // ═══════════════════════════════════════
 function setMode(m){gmode=m;autoAnal=m==='ai';['normal','p2','ai'].forEach(x=>document.getElementById('m'+{normal:'Norm',p2:'P2',ai:'AI'}[x]).classList.toggle('active',m===x));document.getElementById('dctrl').style.opacity=m==='p2'?'0.4':'1';document.getElementById('dctrl').style.pointerEvents=m==='p2'?'none':'auto';saveLS();}
 function setCol(c){pcol=c;colBtns();saveLS();}
 function colBtns(){['w','b'].forEach(c=>{const el=document.getElementById('c'+c.toUpperCase());el.style.borderColor=pcol===c?'var(--gold)':'';el.style.color=pcol===c?'var(--gold)':'';}); }
 function startGame(){
+  if(reviewMode) exitReviewMode();
   game.reset();lastF=null;lastT=null;selSq=null;legal=[];started=true;keyIdx=0;moveSinceAnal=0;
+  currentGameId = Date.now(); currentGameExpl = {}; // אתחול משחק חדש בהיסטוריה
   flipped=gmode!=='p2'&&pcol==='b';
   clearX();clearTut();buildBoard();buildCoords();renderBoard();updHist();updateSt();updCap();clearAbox();
   document.getElementById('evalTxt').textContent='—';document.getElementById('bmove').textContent='מהלך מומלץ: —';
@@ -858,13 +792,13 @@ function startGame(){
 function confirmNew(){if(started&&!game.game_over()&&game.history().length>0&&!confirm('משחק חדש?'))return;startGame();}
 function recordResult(){
   if(game.in_checkmate()){if(gmode==='p2'){const w=game.turn()==='w'?'שחור':'לבן';toast('🏆 '+w+' ניצח!','s');}else if(game.turn()!==pcol){stats.w++;stats.s++;toast('🏆 ניצחת!','s');}else{stats.l++;stats.s=0;toast('💀 הפסדת','e');}}else if(game.in_draw()){stats.d++;stats.s=0;toast('🤝 תיקו!','i');}
-  stats.g++;saveLS();updateStUI();
+  stats.g++;saveLS();updateStUI();updateGameArchive();
 }
 function updateStUI(){document.getElementById('sw').textContent=stats.w;document.getElementById('sl').textContent=stats.l;document.getElementById('sd').textContent=stats.d;document.getElementById('sg').textContent=stats.g;document.getElementById('sm').textContent=stats.m;document.getElementById('ss').textContent=stats.s;}
 function resetStats(){if(!confirm('לאפס?'))return;stats={w:0,l:0,d:0,g:0,m:0,s:0};saveLS();updateStUI();toast('אופס','i');}
 
 // ═══════════════════════════════════════
-//  AI ENGINE
+// AI ENGINE (SIMPLE MINIMAX)
 // ═══════════════════════════════════════
 const PVAL={p:100,n:305,b:333,r:563,q:950,k:20000};
 const PST={
@@ -906,7 +840,7 @@ function aiMove(){
   if(game.game_over()||game.turn()===pcol)return;
   showTh();
   setTimeout(()=>{
-    try{const best=getBest();if(best){const m=game.move({from:best.from,to:best.to,promotion:best.promotion||'q'});if(m){lastF=best.from;lastT=best.to;renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();moveSinceAnal++;if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}if(game.game_over())recordResult();}}}catch(e){console.warn(e);}
+    try{const best=getBest();if(best){const m=game.move({from:best.from,to:best.to,promotion:best.promotion||'q'});if(m){lastF=best.from;lastT=best.to;renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();updateGameArchive();moveSinceAnal++;if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}if(game.game_over())recordResult();}}}catch(e){console.warn(e);}
     hideTh();
   },10);
 }
@@ -914,7 +848,7 @@ function showTh(){document.getElementById('thov').classList.add('on');document.g
 function hideTh(){document.getElementById('thov').classList.remove('on');document.getElementById('sdot').classList.remove('th');}
 
 // ═══════════════════════════════════════
-//  API KEYS
+// API KEYS
 // ═══════════════════════════════════════
 function addKey(ev){const val=typeof ev==='string'?ev:'',idx=apiKeys.length;apiKeys.push({key:val,status:'idle'});const row=document.createElement('div');row.className='keyrow';row.id='kr'+idx;row.innerHTML='<div class="kdot" id="kd'+idx+'"></div><input type="password" class="keyinp" id="ki'+idx+'" placeholder="AIzaSy..." oninput="updKey('+idx+',this.value)" value="'+val+'"><button class="btn btn-danger btn-sm" onclick="delKey('+idx+')" style="padding:4px 8px;flex-shrink:0">✕</button>';document.getElementById('keysList').appendChild(row);}
 function updKey(i,v){if(apiKeys[i]){apiKeys[i].key=v.trim();apiKeys[i].status='idle';document.getElementById('kd'+i).className='kdot';saveLS();}}
@@ -922,7 +856,7 @@ function delKey(i){document.getElementById('kr'+i)?.remove();if(apiKeys[i])apiKe
 function getKeys(){return apiKeys.filter(k=>k&&k.key&&k.status!=='fail');}
 
 // ═══════════════════════════════════════
-//  GEMINI
+// GEMINI
 // ═══════════════════════════════════════
 const GM='gemini-3.1-flash-lite-preview';
 const GURL=k=>'https://generativelanguage.googleapis.com/v1beta/models/'+GM+':generateContent?key='+k;
@@ -942,21 +876,18 @@ async function callGemini(prompt,retries){
 }
 
 // ═══════════════════════════════════════
-//  ANALYSIS (move analysis with steps)
+// ANALYSIS
 // ═══════════════════════════════════════
 function buildPrompt(lastMove){
   return `אתה מאמן שחמט. נתח את המהלך: "${lastMove}"
 FEN: ${game.fen()}
 PGN: ${game.pgn()}
-
-החזר JSON בלבד (ללא כלום אחר!):
-[{"title":"כותרת","text":"הסבר קצר עברית","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]
-
+החזר JSON בלבד (ללא כלום אחר!):[{"title":"כותרת","text":"הסבר קצר עברית","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]
 כללים:
 - 3 שלבים
 - text: עברית פשוטה, 1-2 משפטים
-- highlight: מערך ריבועים (קטן+ספרה: e4, d5) או []
-- arrows: מערך {from,to,color} (cyan/orange/green/red) או []
+- highlight: מערך ריבועים (קטן+ספרה: e4, d5) או[]
+- arrows: מערך {from,to,color} (cyan/orange/green/red) או[]
 - JSON תקני בלבד!`;
 }
 function parseSteps(raw){
@@ -964,7 +895,7 @@ function parseSteps(raw){
   const s=c.indexOf('['),e=c.lastIndexOf(']');
   if(s!==-1&&e>s)c=c.slice(s,e+1);
   try{const arr=JSON.parse(c);if(Array.isArray(arr)&&arr.length)return arr;}catch(ex){}
-  return [{title:'ניתוח',text:raw.replace(/[`\[\]{}"\\]/g,'').slice(0,260),highlight:[],arrows:[]}];
+  return[{title:'ניתוח',text:raw.replace(/[`\[\]{}"\\]/g,'').slice(0,260),highlight:[],arrows:[]}];
 }
 async function analyzeLastMove(){
   const box=document.getElementById('abox');
@@ -975,6 +906,11 @@ async function analyzeLastMove(){
     const raw=await callGemini(buildPrompt(last));
     const steps=parseSteps(raw);
     box.innerHTML='<div class="aph" style="color:var(--grn)">✓ ניתוח מוכן</div>';
+    
+    // שמירת ההסבר למשחק הנוכחי
+    currentGameExpl[hist.length] = steps;
+    updateGameArchive();
+
     xsteps=steps;xidx=0;showXstep(0);document.getElementById('xpanel').style.display='block';
     if(fsMode){syncFsOverlay();document.getElementById('fsAnal').style.display='block';}
   }catch(e){box.innerHTML='<div class="aph" style="color:var(--red)">'+e.message+'</div>';toast(e.message,'e');}
@@ -990,7 +926,15 @@ function showXstep(idx){
   document.getElementById('xcnt2').textContent=(idx+1)+' מתוך '+xsteps.length;
   document.getElementById('bprev').disabled=idx===0;document.getElementById('bnext').disabled=idx===xsteps.length-1;
   document.querySelectorAll('.sq').forEach(s=>s.classList.remove('xsq'));clearArrows();
-  if(lastF)document.getElementById('sq_'+lastF)?.classList.add('hl-f');if(lastT)document.getElementById('sq_'+lastT)?.classList.add('hl-t');
+  
+  if(!reviewMode) {
+      if(lastF)document.getElementById('sq_'+lastF)?.classList.add('hl-f');
+      if(lastT)document.getElementById('sq_'+lastT)?.classList.add('hl-t');
+  } else {
+      const h = reviewGameInstance.history({verbose:true});
+      if(h.length) { document.getElementById('sq_'+h[h.length-1].from)?.classList.add('hl-f'); document.getElementById('sq_'+h[h.length-1].to)?.classList.add('hl-t'); }
+  }
+
   if(Array.isArray(s.highlight))s.highlight.forEach(sq=>hlSq(sq,'xsq'));
   if(Array.isArray(s.arrows))s.arrows.forEach(a=>{if(a&&a.from&&a.to)drawArrow(a.from,a.to,a.color||'cyan');});
   syncFsOverlay();
@@ -1017,8 +961,87 @@ function closeModal(){document.getElementById('analModal').classList.remove('on'
 function clearAbox(){document.getElementById('abox').innerHTML='<div class="aph">בצע מהלך לניתוח...</div>';}
 
 // ═══════════════════════════════════════
-//  CHAT WITH AI
+// CHATS SYSTEM
 // ═══════════════════════════════════════
+function updateChatArchive() {
+    if(currentChatMsgs.length === 0) return;
+    const idx = chatsArchive.findIndex(c => c.id === currentChatId);
+    const cObj = {id: currentChatId, date: new Date().toLocaleDateString('he-IL'), title: currentChatTitle, starred: currentChatStarred, msgs: currentChatMsgs};
+    if(idx >= 0) chatsArchive[idx] = cObj;
+    else chatsArchive.unshift(cObj);
+    localStorage.setItem('cai_chats', JSON.stringify(chatsArchive));
+    renderChatsList();
+}
+function newChat() {
+    currentChatId = Date.now();
+    currentChatTitle = "צ'אט חדש";
+    currentChatStarred = false;
+    currentChatMsgs =[];
+    renderActiveChat();
+    tab('chat');
+    toast("התחלת צ'אט חדש", 's');
+}
+function renderActiveChat() {
+    const msgs = document.getElementById('chatMsgs');
+    msgs.innerHTML = '';
+    document.getElementById('chatTitleLbl').textContent = currentChatTitle === "צ'אט חדש" ? "🤖 צ'אט עם מאמן AI" : "💬 " + currentChatTitle;
+    
+    if(currentChatMsgs.length === 0) {
+        const d = document.createElement('div'); d.className='cmsg ai';
+        d.innerHTML='שלום! אני המאמן שלך 👋<br>שאל אותי כל שאלה על שחמט — פתיחות, טקטיקות, אסטרטגיה — ואדגים לך על הלוח!';
+        msgs.appendChild(d);
+    } else {
+        currentChatMsgs.forEach(m => {
+            const el = document.createElement('div'); el.className = 'cmsg ' + m.role;
+            el.textContent = m.text;
+            if(m.demo) {
+                const demBtn = document.createElement('button');
+                demBtn.className='chat-sug-btn'; demBtn.style.marginTop='7px'; demBtn.style.display='block';
+                demBtn.textContent='📍 הצג תרשים שחמט';
+                demBtn.onclick=()=>{xsteps=m.demo;xidx=0;showXstep(0);document.getElementById('xpanel').style.display='block';if(!fsMode)tab('analysis');toast('הדגמה מוצגת','i');};
+                el.appendChild(demBtn);
+            }
+            msgs.appendChild(el);
+        });
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+}
+function loadChat(id) {
+    const c = chatsArchive.find(x => x.id === id);
+    if(!c) return;
+    currentChatId = c.id; currentChatMsgs = c.msgs; currentChatTitle = c.title; currentChatStarred = c.starred;
+    renderActiveChat();
+    tab('chat');
+}
+function deleteChat(id) {
+    if(!confirm("למחוק צ'אט זה?")) return;
+    chatsArchive = chatsArchive.filter(c => c.id !== id);
+    localStorage.setItem('cai_chats', JSON.stringify(chatsArchive));
+    if(currentChatId === id) newChat();
+    renderChatsList();
+}
+function toggleChatStar(id) {
+    const c = chatsArchive.find(x => x.id === id);
+    if(c) { c.starred = !c.starred; localStorage.setItem('cai_chats', JSON.stringify(chatsArchive)); renderChatsList(); }
+}
+function backupChats() {
+    const blob = new Blob([JSON.stringify(chatsArchive)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'chess_chats_backup.json'; a.click();
+}
+function restoreChats(e) {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const data = JSON.parse(ev.target.result);
+            if(Array.isArray(data)) { chatsArchive = data; localStorage.setItem('cai_chats', JSON.stringify(chatsArchive)); renderChatsList(); toast("הצ'אטים שוחזרו בהצלחה", 's'); }
+        } catch(e) { toast("קובץ לא תקין", 'e'); }
+    };
+    reader.readAsText(file);
+}
+
 async function sendChat(){
   const inp=document.getElementById('chatInput');
   const msg=inp.value.trim();if(!msg)return;
@@ -1027,50 +1050,146 @@ async function sendChat(){
 }
 async function chatAsk(msg){
   if(!getKeys().length){toast('הוסף מפתח Gemini בהגדרות','e');tab('setup');return;}
+  if(currentChatMsgs.length === 0) currentChatTitle = msg.substring(0,25) + (msg.length>25?'...':'');
+  currentChatMsgs.push({role:'user', text:msg});
+  renderActiveChat();
+  
   const msgs=document.getElementById('chatMsgs');
-  // add user message
-  const um=document.createElement('div');um.className='cmsg user';um.textContent=msg;msgs.appendChild(um);
-  msgs.scrollTop=msgs.scrollHeight;
-  // add loading AI message
   const am=document.createElement('div');am.className='cmsg ai loading-msg';am.textContent='🤔 מחשב...';msgs.appendChild(am);
   msgs.scrollTop=msgs.scrollHeight;
-  // build prompt
+  
   const ctx=started?`\n\nמצב לוח נוכחי FEN: ${game.fen()}\nהיסטוריית מהלכים: ${game.pgn()||'טרם התחיל'}`:'';
-  const prompt=`אתה מאמן שחמט מנוסה שמלמד שחמט בעברית פשוטה.
+  const prompt=`אתה מאמן שחמט מנוסה שמלמד בעברית פשוטה.
 ${ctx}
-
-שאלת המשתמש: "${msg}"
-
-ענה בעברית פשוטה וברורה. אחרי הסבר טקסטואלי, אם רלוונטי, הוסף בסוף התשובה JSON עם הדגמה על הלוח בפורמט הבא (בין תגיות BOARD_DEMO):
-BOARD_DEMO:[{"title":"כותרת","text":"הסבר","highlight":["e4","d5"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]END_DEMO
-
-אם אין הדגמה מתאימה, אל תוסיף BOARD_DEMO בכלל.
-הסבר: עברית פשוטה, 2-4 משפטים.`;
+הודעת המשתמש: "${msg}"
+ענה בעברית פשוטה. אם רלוונטי להדגים מהלך על הלוח, הוסף בסוף התשובה JSON של תרשים בפורמט:
+BOARD_DEMO:[{"title":"כותרת","text":"הסבר","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]END_DEMO
+אם אין צורך בהדגמה, אל תוסיף BOARD_DEMO.`;
   try{
     const raw=await callGemini(prompt);
-    // parse out BOARD_DEMO if present
     let textPart=raw, demoSteps=null;
-    const demoMatch=raw.match(/BOARD_DEMO:(\[[\s\S]*?\])END_DEMO/);
+    const demoMatch=raw.match(/BOARD_DEMO:(\s*\[[\s\S]*?\]\s*)END_DEMO/);
     if(demoMatch){
       textPart=raw.replace(/BOARD_DEMO:[\s\S]*?END_DEMO/,'').trim();
       try{demoSteps=JSON.parse(demoMatch[1]);}catch(e){}
     }
     am.className='cmsg ai';am.textContent=textPart;
-    // if demo, add button and apply
-    if(demoSteps&&Array.isArray(demoSteps)&&demoSteps.length>0){
-      const demBtn=document.createElement('button');
-      demBtn.className='chat-sug-btn';demBtn.style.marginTop='7px';demBtn.style.display='block';
-      demBtn.textContent='📍 הצג הדגמה על הלוח';
-      const stepsCapture=demoSteps;
-      demBtn.onclick=()=>{xsteps=stepsCapture;xidx=0;showXstep(0);document.getElementById('xpanel').style.display='block';if(!fsMode)tab('analysis');toast('הדגמה מוצגת על הלוח','i');};
-      am.appendChild(demBtn);
-    }
-    msgs.scrollTop=msgs.scrollHeight;
+    currentChatMsgs.push({role:'ai', text:textPart, demo: demoSteps});
+    updateChatArchive();
+    renderActiveChat();
   }catch(e){am.className='cmsg ai';am.textContent='שגיאה: '+e.message;}
 }
 
 // ═══════════════════════════════════════
-//  TUTORIAL
+// GAMES ARCHIVE & REVIEW
+// ═══════════════════════════════════════
+function updateGameArchive() {
+    if(game.history().length === 0) return;
+    const idx = gamesArchive.findIndex(g => g.id === currentGameId);
+    const gObj = {id: currentGameId, date: new Date().toLocaleDateString('he-IL') + " " + new Date().toLocaleTimeString('he-IL', {hour:'2-digit', minute:'2-digit'}), pgn: game.pgn(), result: game.game_over()?'הסתיים':'פעיל', expl: currentGameExpl};
+    if(idx >= 0) gamesArchive[idx] = gObj;
+    else gamesArchive.unshift(gObj);
+    localStorage.setItem('cai_games', JSON.stringify(gamesArchive));
+    renderGamesList();
+}
+function startReviewGame(id) {
+    const g = gamesArchive.find(x => x.id === id);
+    if(!g) return;
+    reviewMode = true;
+    reviewGameObj = g;
+    const temp = new Chess(); temp.load_pgn(g.pgn);
+    reviewHistory = temp.history({verbose:true});
+    reviewMoveIndex = 0;
+    
+    document.getElementById('histGamesPane').style.display='none';
+    document.getElementById('histChatsPane').style.display='none';
+    document.getElementById('histReviewPane').style.display='block';
+    
+    document.getElementById('revBanner').style.display='flex';
+    document.querySelector('.bbtns').style.display='none'; // hide normal buttons
+    
+    revMove(0);
+}
+function exitReviewMode() {
+    reviewMode = false; reviewGameObj = null;
+    document.getElementById('revBanner').style.display='none';
+    document.querySelector('.bbtns').style.display='flex';
+    document.getElementById('histReviewPane').style.display='none';
+    document.getElementById('histGamesPane').style.display='block';
+    clearX();
+    renderBoard(); // render back the active game
+    toast("חזרת למשחק הנוכחי", 'i');
+}
+function revMove(dir) {
+    reviewMoveIndex += dir;
+    if(reviewMoveIndex < 0) reviewMoveIndex = 0;
+    if(reviewMoveIndex > reviewHistory.length) reviewMoveIndex = reviewHistory.length;
+    
+    reviewGameInstance.reset();
+    for(let i=0; i<reviewMoveIndex; i++) reviewGameInstance.move(reviewHistory[i]);
+    renderBoard(reviewGameInstance); // render review instance
+    
+    document.getElementById('revMoveText').textContent = 'מהלך ' + reviewMoveIndex + ' מתוך ' + reviewHistory.length;
+    
+    const expl = reviewGameObj.expl[reviewMoveIndex];
+    if(expl && expl.length) {
+        document.getElementById('revExpl').style.display = 'block';
+        document.getElementById('revExplTitle').textContent = expl[0].title || 'ניתוח AI';
+        document.getElementById('revExplText').textContent = expl[0].text;
+        window.currentRevDemo = expl;
+    } else {
+        document.getElementById('revExpl').style.display = 'none';
+        clearArrows(); document.querySelectorAll('.sq').forEach(s=>s.classList.remove('xsq'));
+    }
+}
+function showRevDemo() {
+    if(window.currentRevDemo) { xsteps = window.currentRevDemo; xidx = 0; showXstep(0); }
+}
+
+// ═══════════════════════════════════════
+// HISTORY LIST RENDERERS
+// ═══════════════════════════════════════
+function renderGamesList() {
+    const list = document.getElementById('gamesArchiveList');
+    if(!list) return;
+    list.innerHTML = '';
+    if(gamesArchive.length === 0) { list.innerHTML = '<div class="aph">אין משחקים שמורים</div>'; return; }
+    gamesArchive.forEach(g => {
+        const div = document.createElement('div'); div.className = 'mcard'; div.style.display = 'flex'; div.style.alignItems = 'center'; div.style.textAlign = 'right'; div.style.padding = '8px 12px';
+        const mvsCount = g.pgn ? g.pgn.split(' ').filter(x => x.includes('.')).length : 0;
+        div.innerHTML = `
+            <div style="flex:1; cursor:pointer;" onclick="startReviewGame(${g.id})">
+                <div style="font-weight:600; color:var(--t1)">משחק מתאריך ${g.date}</div>
+                <div style="font-size:.68rem; color:var(--t3); margin-top:2px;">תוצאה: <span style="color:var(--gold)">${g.result}</span> • ${mvsCount} מהלכים</div>
+            </div>
+            <div style="font-size:1.2rem;opacity:0.5">▶</div>
+        `;
+        list.appendChild(div);
+    });
+}
+function renderChatsList() {
+    const list = document.getElementById('chatsArchiveList');
+    if(!list) return;
+    list.innerHTML = '';
+    if(chatsArchive.length === 0) { list.innerHTML = '<div class="aph">אין צ\'אטים שמורים</div>'; return; }
+    chatsArchive.forEach(c => {
+        const div = document.createElement('div'); div.className = 'mcard'; div.style.display = 'flex'; div.style.alignItems = 'center'; div.style.textAlign = 'right'; div.style.padding = '8px';
+        div.innerHTML = `
+            <div style="flex:1; cursor:pointer; padding-left:5px" onclick="loadChat(${c.id})">
+                <div style="font-weight:600; color:${c.starred ? 'var(--gold)' : 'var(--t1)'}">${c.starred ? '⭐ ' : ''}${c.title}</div>
+                <div style="font-size:.65rem; color:var(--t3); margin-top:2px;">${c.date} • ${c.msgs.length} הודעות</div>
+            </div>
+            <div style="display:flex; gap:4px;">
+                <button class="btn btn-ghost btn-sm" onclick="toggleChatStar(${c.id})">${c.starred ? '★' : '☆'}</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteChat(${c.id})">🗑</button>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+// ═══════════════════════════════════════
+// TUTORIAL
 // ═══════════════════════════════════════
 function initTutorial(){showTutStep(0);}
 function showTutStep(idx){
@@ -1093,10 +1212,11 @@ function applyTutBoard(idx){
 function clearTut(){tutActive=false;document.querySelectorAll('.sq').forEach(s=>s.classList.remove('tut'));clearArrows();if(lastF)document.getElementById('sq_'+lastF)?.classList.add('hl-f');if(lastT)document.getElementById('sq_'+lastT)?.classList.add('hl-t');}
 
 // ═══════════════════════════════════════
-//  TABS
+// TABS
 // ═══════════════════════════════════════
-const TABS=['setup','analysis','chat','history','themes','tutorial','stats'];
+const TABS=['setup','history','analysis','chat','themes','tutorial','stats'];
 function tab(name){
+  if(name!=='history' && reviewMode) exitReviewMode();
   document.querySelectorAll('.tpane').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
@@ -1104,9 +1224,16 @@ function tab(name){
   if(name==='tutorial'){tutActive=true;applyTutBoard(tutIdx);}
   else if(tutActive){tutActive=false;clearTut();}
 }
+function switchHist(t) {
+  document.getElementById('btnTabGames').className = t==='games'?'btn btn-cyan btn-sm':'btn btn-out btn-sm';
+  document.getElementById('btnTabChats').className = t==='chats'?'btn btn-cyan btn-sm':'btn btn-out btn-sm';
+  document.getElementById('histGamesPane').style.display = t==='games'?'block':'none';
+  document.getElementById('histChatsPane').style.display = t==='chats'?'block':'none';
+  document.getElementById('histReviewPane').style.display = 'none'; // reset review pane
+}
 
 // ═══════════════════════════════════════
-//  THEMES
+// THEMES
 // ═══════════════════════════════════════
 function buildThUI(){
   const bg=document.getElementById('bgthemes');
@@ -1128,7 +1255,7 @@ function refreshThUI(){
 }
 
 // ═══════════════════════════════════════
-//  TOASTS
+// TOASTS
 // ═══════════════════════════════════════
 function toast(msg,type){const w=document.getElementById('twrap'),t=document.createElement('div');t.className='toast t'+(type||'i');t.textContent=msg;w.appendChild(t);setTimeout(()=>{t.style.cssText='opacity:0;transform:translateY(16px);transition:all .3s';setTimeout(()=>t.remove(),300);},2600);}
 </script>

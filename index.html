@@ -370,7 +370,7 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
         <div class="div"></div>
         <div style="background:var(--inp);border:1px solid var(--brd);border-radius:8px;padding:9px">
           <div id="evalTxt" style="font-family:monospace;font-size:1.1rem;font-weight:700;color:var(--gold)">—</div>
-          <div id="bmove" style="font-size:.7rem;color:var(--t3);margin-top:2px">מהלך מומלץ: —</div>
+          <div id="bmove" style="font-size:.7rem;color:var(--t3);margin-top:2px">מחושב ע"י Stockfish 10</div>
         </div>
       </div>
       <!-- CHAT -->
@@ -468,7 +468,7 @@ body.fs-mode .bsec{padding:16px 8px 30px;}
 <div class="twrap" id="twrap"></div>
 <script>
 // ═══════════════════════════════════════
-// SOUND EFFECTS (Web Audio API - No external links!)
+// SOUND EFFECTS (Web Audio API)
 // ═══════════════════════════════════════
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playTone(freq, type, dur, vol, delay=0) {
@@ -492,6 +492,84 @@ function playSound(type) {
     else if(type === 'check') playTone(800, 'square', 0.2, 0.3);
     else if(type === 'win') { playTone(400, 'sine', 0.1, 0.5, 0); playTone(500, 'sine', 0.1, 0.5, 0.1); playTone(600, 'sine', 0.4, 0.5, 0.2); }
     else if(type === 'lose') { playTone(400, 'sawtooth', 0.2, 0.5, 0); playTone(350, 'sawtooth', 0.2, 0.5, 0.2); playTone(300, 'sawtooth', 0.5, 0.5, 0.4); }
+}
+
+// ═══════════════════════════════════════
+// STOCKFISH 10 ENGINE INTEGRATION
+// ═══════════════════════════════════════
+let sfWorker = null;
+let engineReady = false;
+
+async function initStockfish() {
+    try {
+        const res = await fetch('https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js');
+        const text = await res.text();
+        const blob = new Blob([text], {type: 'application/javascript'});
+        sfWorker = new Worker(URL.createObjectURL(blob));
+        sfWorker.onmessage = function(e) {
+            const msg = e.data;
+            if(msg === 'uciok') engineReady = true;
+            
+            // Parse evaluation for the bar
+            if(msg.includes('score cp')) {
+                const match = msg.match(/score cp (-?\d+)/);
+                if(match) {
+                    let score = parseInt(match[1]);
+                    if(game.turn() === 'b') score = -score; // sf score is relative
+                    updateUIEval(score);
+                }
+            } else if (msg.includes('score mate')) {
+                const match = msg.match(/score mate (-?\d+)/);
+                if(match) {
+                    let mateIn = parseInt(match[1]);
+                    let score = mateIn > 0 ? 10000 : -10000;
+                    if(game.turn() === 'b') score = -score;
+                    updateUIEval(score);
+                }
+            }
+            
+            // Get best move
+            if(msg.startsWith('bestmove')) {
+                const move = msg.split(' ')[1];
+                handleEngineMove(move);
+            }
+        };
+        sfWorker.postMessage('uci');
+    } catch(e) {
+        console.log("Stockfish failed to load. Will fallback to basic AI.");
+    }
+}
+
+function updateUIEval(sc) {
+    const cl=Math.max(-800,Math.min(800,sc));
+    const pct=50+cl/16;
+    const fill=document.getElementById('evalf');
+    fill.style.height=Math.max(5,Math.min(95,pct))+'%';
+    fill.style.background=sc>=0?'rgba(255,255,255,.82)':'rgba(30,30,30,.9)';
+    
+    let val = sc>0?'+'+(sc/100).toFixed(1):(sc/100).toFixed(1);
+    if(Math.abs(sc) >= 9000) val = 'M' + (10000-Math.abs(sc));
+    document.getElementById('evalTxt').textContent=val;
+}
+
+function handleEngineMove(moveStr) {
+    hideTh();
+    if(!moveStr || moveStr === '(none)') return;
+    const from = moveStr.substring(0,2);
+    const to = moveStr.substring(2,4);
+    const prom = moveStr.length > 4 ? moveStr[4] : 'q';
+    
+    const m = game.move({from: from, to: to, promotion: prom});
+    if(m) {
+        lastF = from; lastT = to;
+        if(m.captured) playSound('capture'); else playSound('move');
+        renderBoard(); updHist(); updateSt(); updCap(); stats.m++; saveLS();
+        updateGameArchive(); moveSinceAnal++;
+        if(autoAnal && getKeys().length>0 && moveSinceAnal>=2){
+            moveSinceAnal=0; tab('analysis'); analyzeLastMove();
+        }
+        if(game.game_over()) recordResult();
+    }
 }
 
 // ═══════════════════════════════════════
@@ -582,16 +660,25 @@ function undoMove() {
         if(!reviewMode) toast("אין מה לבטל", 'i');
         return;
     }
-    // אם המשחק נגמר כבר - נבטל את הסטטוס "נגמר" ונחזיר אחורה
     game.undo();
-    if(gmode !== 'p2') game.undo(); // מחשב גם מבטל מהלך
+    if(gmode !== 'p2') game.undo(); 
     
     lastF = null; lastT = null;
     const h = game.history({verbose:true});
     if(h.length) { lastF = h[h.length-1].from; lastT = h[h.length-1].to; }
     
-    renderBoard(); updHist(); updateSt(); updCap(); updateEvalBar(); updateGameArchive();
+    renderBoard(); updHist(); updateSt(); updCap(); 
+    
+    // Quick static eval update if stockfish hasn't responded yet
+    updateEvalBar(); 
+    updateGameArchive();
     toast("מהלך בוטל", 'i');
+    
+    // Tell Stockfish to evaluate new position
+    if(sfWorker && engineReady && !game.game_over()) {
+        sfWorker.postMessage('position fen ' + game.fen());
+        sfWorker.postMessage('eval'); // Just ask for eval without 'go'
+    }
 }
 
 // ═══════════════════════════════════════
@@ -631,7 +718,7 @@ function tickClock() {
         timeW = Math.max(0, timeW); timeB = Math.max(0, timeB);
         renderClock();
         clearInterval(timerInt);
-        recordResult(true); // timeout flag
+        recordResult(true); 
     } else {
         renderClock();
     }
@@ -708,6 +795,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   calcSQ();buildBoard();buildCoords();renderBoard();
   loadLS();colBtns();updateSt();initArrows();
   initTutorial();
+  initStockfish(); // Start Stockfish!
   window.addEventListener('resize',onResize);
   document.getElementById('analModal').addEventListener('click',e=>{if(e.target===document.getElementById('analModal'))closeModal();});
   setTimeout(checkPtabs, 100);
@@ -811,7 +899,18 @@ function renderBoard(instance = game){
   }
 }
 function clearHL(){document.querySelectorAll('.sq').forEach(s=>s.classList.remove('sel','hl-f','hl-t','lm','lc','chk','xsq','tut'));clearArrows();}
-function findKing(col, instance){const p=instance.board();for(let r=0;r<8;r++)for(let c=0;c<8;c++)if(p[r][c]&&p[r][c].type==='k'&&p[r][c].color===col)return FILES[c]+(r+1);return null;}
+
+// 🔴 FIX: Fixed vertical alignment math bug (8 - r)
+function findKing(col, instance){
+    const p=instance.board();
+    for(let r=0;r<8;r++){
+        for(let c=0;c<8;c++){
+            if(p[r][c]&&p[r][c].type==='k'&&p[r][c].color===col) return FILES[c]+(8-r); 
+        }
+    }
+    return null;
+}
+
 function flipBoard(){flipped=!flipped;buildBoard();buildCoords();renderBoard();if(selSq)showLegal(selSq);if(xsteps.length)showXstep(xidx);if(tutActive)applyTutBoard(tutIdx);}
 
 // ═══════════════════════════════════════
@@ -877,9 +976,9 @@ function showLegal(sq){
   legal=mvs.map(m=>m.to);
   mvs.forEach(m=>{const el=document.getElementById('sq_'+m.to);if(el)el.classList.add(m.captured?'lc':'lm');});
 }
+
 function doMove(from,to){
   if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-  
   if(game.history().length === 0) startClock();
   
   const mv=game.move({from,to,promotion:'q'});if(!mv)return;
@@ -888,14 +987,23 @@ function doMove(from,to){
   if(mv.captured) playSound('capture');
   else playSound('move');
   
-  renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();
+  renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();
   updateGameArchive(); 
   moveSinceAnal++;
   
   if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}
   
-  if(!game.game_over()&&gmode!=='p2')setTimeout(aiMove,10);
-  else if(game.game_over())recordResult();
+  if(!game.game_over()&&gmode!=='p2') {
+      setTimeout(aiMove,10);
+  } else if(game.game_over()) {
+      recordResult();
+  } else {
+      // P2 mode, ask stockfish for eval
+      if(sfWorker && engineReady) {
+          sfWorker.postMessage('position fen ' + game.fen());
+          sfWorker.postMessage('eval');
+      }
+  }
 }
 
 // ═══════════════════════════════════════
@@ -914,15 +1022,16 @@ function updateSt(){
   }
   else{const t=gmode==='p2'?(game.turn()==='w'?'תורו של לבן':'תורו של שחור'):'תורו של '+(game.turn()==='w'?'לבן':'שחור');txt.textContent=t;dot.className='sdot';bdg.textContent=game.turn()==='w'?'♙ לבן':'♟ שחור';bdg.className='tbdg'+(game.turn()==='b'?' bt':'');}
 }
+
+// Fallback eval in case stockfish isn't ready
 function updateEvalBar(){
-  const sc=evalBoard();
-  const cl=Math.max(-800,Math.min(800,sc));
-  const pct=50+cl/16;
-  const fill=document.getElementById('evalf');
-  fill.style.height=Math.max(5,Math.min(95,pct))+'%';
-  fill.style.background=sc>=0?'rgba(255,255,255,.82)':'rgba(30,30,30,.9)';
-  document.getElementById('evalTxt').textContent=sc>0?'+'+(sc/100).toFixed(1):(sc/100).toFixed(1);
+  if(sfWorker && engineReady) return; // let stockfish handle it
+  // highly compressed static eval fallback
+  let sc=0;const p=game.board();const V={p:100,n:300,b:300,r:500,q:900,k:0};
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){if(p[r][c])sc+=p[r][c].color==='w'?V[p[r][c].type]:-V[p[r][c].type];}
+  updateUIEval(sc);
 }
+
 const PV={p:1,n:3,b:3,r:5,q:9,k:0};
 function updCap(){
   const hist=game.history({verbose:true}),cW=[],cB=[];let sW=0,sB=0;
@@ -953,9 +1062,11 @@ function startGame(){
   flipped=gmode!=='p2'&&pcol==='b';
   initClock();
   clearX();clearTut();buildBoard();buildCoords();renderBoard();updHist();updateSt();updCap();clearAbox();
-  document.getElementById('evalTxt').textContent='—';document.getElementById('bmove').textContent='מהלך מומלץ: —';
+  document.getElementById('evalTxt').textContent='—';document.getElementById('bmove').textContent='מחושב ע"י Stockfish 10';
   updateEvalBar();
   toast(gmode==='p2'?'משחק בין שני שחקנים 👥':'משחק חדש 🎮','s');
+  
+  if(sfWorker && engineReady) sfWorker.postMessage('ucinewgame');
   if(gmode!=='p2'&&pcol==='b')setTimeout(aiMove,600);
 }
 function confirmNew(){if(started&&!game.game_over()&&game.history().length>0&&!confirm('משחק חדש?'))return;startGame();}
@@ -984,57 +1095,31 @@ function updateStUI(){document.getElementById('sw').textContent=stats.w;document
 function resetStats(){if(!confirm('לאפס?'))return;stats={w:0,l:0,d:0,g:0,m:0,s:0};saveLS();updateStUI();toast('אופס','i');}
 
 // ═══════════════════════════════════════
-// AI ENGINE (SIMPLE MINIMAX)
+// AI ENGINE (STOCKFISH!)
 // ═══════════════════════════════════════
-const PVAL={p:100,n:305,b:333,r:563,q:950,k:20000};
-const PST={
-  p:[0,0,0,0,0,0,0,0,50,50,50,50,50,50,50,50,10,10,20,30,30,20,10,10,5,5,10,25,25,10,5,5,0,0,0,20,20,0,0,0,5,-5,-10,0,0,-10,-5,5,5,10,10,-20,-20,10,10,5,0,0,0,0,0,0,0,0],
-  n:[-50,-40,-30,-30,-30,-30,-40,-50,-40,-20,0,0,0,0,-20,-40,-30,0,10,15,15,10,0,-30,-30,5,15,20,20,15,5,-30,-30,0,15,20,20,15,0,-30,-30,5,10,15,15,10,5,-30,-40,-20,0,5,5,0,-20,-40,-50,-40,-30,-30,-30,-30,-40,-50],
-  b:[-20,-10,-10,-10,-10,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,10,10,5,0,-10,-10,5,5,10,10,5,5,-10,-10,0,10,10,10,10,0,-10,-10,10,10,10,10,10,10,-10,-10,5,0,0,0,0,5,-10,-20,-10,-10,-10,-10,-10,-10,-20],
-  r:[0,0,0,0,0,0,0,0,5,10,10,10,10,10,10,5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,-5,0,0,0,0,0,0,-5,0,0,0,5,5,0,0,0],
-  q:[-20,-10,-10,-5,-5,-10,-10,-20,-10,0,0,0,0,0,0,-10,-10,0,5,5,5,5,0,-10,-5,0,5,5,5,5,0,-5,0,0,5,5,5,5,0,-5,-10,5,5,5,5,5,0,-10,-10,0,5,0,0,0,0,-10,-20,-10,-10,-5,-5,-10,-10,-20],
-  k:[-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-30,-40,-40,-50,-50,-40,-40,-30,-20,-30,-30,-40,-40,-30,-30,-20,-10,-20,-20,-20,-20,-20,-20,-10,20,20,0,0,0,0,20,20,20,30,10,0,0,10,30,20]
-};
-function evalBoard(){
-  if(game.in_checkmate())return game.turn()==='w'?-99999:99999;
-  if(game.in_draw())return 0;
-  let sc=0;const pos=game.board();
-  for(let r=0;r<8;r++)for(let c=0;c<8;c++){const p=pos[r][c];if(!p)continue;const i=p.color==='w'?(7-r)*8+c:r*8+c;sc+=p.color==='w'?((PVAL[p.type]||0)+(PST[p.type]?.[i]||0)):-((PVAL[p.type]||0)+(PST[p.type]?.[i]||0));}
-  return sc;
-}
-function orderMvs(mvs){return mvs.sort((a,b)=>{let sa=0,sb=0;if(a.captured)sa+=(PV[a.captured]||0)*10;if(b.captured)sb+=(PV[b.captured]||0)*10;if(a.promotion)sa+=800;if(b.promotion)sb+=800;return sb-sa;});}
-function ab(d,alpha,beta,isMax){
-  if(d===0||game.game_over())return evalBoard();
-  const mvs=orderMvs(game.moves({verbose:true}));
-  if(isMax){let best=-Infinity;for(const m of mvs){game.move(m);const v=ab(d-1,alpha,beta,false);game.undo();if(v>best)best=v;if(v>alpha)alpha=v;if(alpha>=beta)break;}return best;}
-  else{let best=Infinity;for(const m of mvs){game.move(m);const v=ab(d-1,alpha,beta,true);game.undo();if(v<best)best=v;if(v<beta)beta=v;if(alpha>=beta)break;}return best;}
-}
-function getBest(){
-  const diff=parseInt(document.getElementById('dsl').value);
-  const depth=diff<=3?1:diff<=7?2:diff<=12?3:diff<=16?4:5;
-  const errRate=Math.max(0,(14-diff)/14)*0.8;
-  const mvs=orderMvs(game.moves({verbose:true}));
-  if(!mvs.length)return null;
-  if(Math.random()<errRate)return mvs[Math.floor(Math.random()*mvs.length)];
-  const isMax=game.turn()==='w';let bestVal=isMax?-Infinity:Infinity,best=mvs[0];
-  for(const m of mvs){game.move(m);const v=ab(depth-1,-Infinity,Infinity,!isMax);game.undo();if(isMax&&v>bestVal){bestVal=v;best=m;}if(!isMax&&v<bestVal){bestVal=v;best=m;}}
-  document.getElementById('evalTxt').textContent=bestVal>0?'+'+(bestVal/100).toFixed(1):(bestVal/100).toFixed(1);
-  document.getElementById('bmove').textContent='מהלך מומלץ: '+best.from+'→'+best.to;
-  return best;
-}
 function aiMove(){
   if(game.game_over()||game.turn()===pcol)return;
   showTh();
-  setTimeout(()=>{
-    try{const best=getBest();if(best){const m=game.move({from:best.from,to:best.to,promotion:best.promotion||'q'});if(m){
-        lastF=best.from;lastT=best.to;
-        if(m.captured) playSound('capture'); else playSound('move');
-        renderBoard();updHist();updateSt();updCap();stats.m++;saveLS();updateEvalBar();updateGameArchive();moveSinceAnal++;
-        if(autoAnal&&getKeys().length>0&&moveSinceAnal>=2){moveSinceAnal=0;tab('analysis');analyzeLastMove();}
-        if(game.game_over())recordResult();
-    }}}catch(e){console.warn(e);}
-    hideTh();
-  },10);
+  let diff = parseInt(document.getElementById('dsl').value); // 1 to 20
+  
+  if(sfWorker && engineReady) {
+      // Configure skill
+      sfWorker.postMessage('setoption name Skill Level value ' + diff);
+      sfWorker.postMessage('position fen ' + game.fen());
+      
+      // Calculate depth based on diff (Level 1 -> depth 1. Level 20 -> depth 15)
+      let depth = Math.max(1, Math.floor(diff * 0.75));
+      sfWorker.postMessage('go depth ' + depth);
+  } else {
+      // Ultra basic random fallback just in case sf crashes
+      setTimeout(()=>{
+          const mvs = game.moves();
+          if(!mvs.length) return;
+          const mv = mvs[Math.floor(Math.random()*mvs.length)];
+          const res = game.move(mv);
+          handleEngineMove(res.from + res.to + (res.promotion||''));
+      }, 500);
+  }
 }
 function showTh(){document.getElementById('thov').classList.add('on');document.getElementById('sdot').classList.add('th');}
 function hideTh(){document.getElementById('thov').classList.remove('on');document.getElementById('sdot').classList.remove('th');}
@@ -1053,7 +1138,6 @@ function getKeys(){return apiKeys.filter(k=>k&&k.key&&k.status!=='fail');}
 const GM='gemini-3.1-flash-lite-preview';
 const GURL=k=>'https://generativelanguage.googleapis.com/v1beta/models/'+GM+':generateContent?key='+k;
 
-// now payload can be either string (simple prompt) or array of contents (for chat)
 async function callGemini(payload,retries){
   retries=retries||0;
   const keys=getKeys();if(!keys.length)throw new Error('אין מפתחות API.');
@@ -1063,11 +1147,8 @@ async function callGemini(payload,retries){
   if(gi>=0)document.getElementById('kd'+gi)?.classList.add('act');
   
   let contents =[];
-  if(typeof payload === 'string') {
-      contents = [{parts:[{text: payload}]}];
-  } else {
-      contents = payload;
-  }
+  if(typeof payload === 'string') { contents = [{parts:[{text: payload}]}]; } 
+  else { contents = payload; }
 
   try{
     const res=await fetch(GURL(ko.key),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents: contents,generationConfig:{temperature:0.4,maxOutputTokens:1200}})});
@@ -1081,11 +1162,16 @@ async function callGemini(payload,retries){
 // ANALYSIS
 // ═══════════════════════════════════════
 function buildPrompt(lastMove){
-  return `אתה מאמן שחמט. נתח את המהלך: "${lastMove}"
+  const validMvs = game.moves().join(', ');
+  return `אתה מאמן שחמט מקצועי. נתח את המהלך: "${lastMove}"
 FEN: ${game.fen()}
 PGN: ${game.pgn()}
+מהלכים חוקיים אפשריים כרגע: ${validMvs}
+
+אזהרה חמורה: אל תמציא איומים או מהלכים שאינם חוקיים בשחמט או לא נמצאים בלוח! התבסס אך ורק על מצב הלוח האמיתי.
+
 החזר JSON בלבד (ללא כלום אחר!):[{"title":"כותרת","text":"הסבר קצר עברית","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]
-חשוב מאוד: אם ההסבר מורכב ממספר מהלכים (למשל סדרת אכילות), הקפד ליצור אובייקט נפרד לכל שלב במערך ה-JSON כך שניתן יהיה לדפדף ביניהם!
+חשוב מאוד: אם ההסבר דורש סדרת מהלכים, הקפד ליצור אובייקט נפרד לכל שלב במערך ה-JSON כך שהמשתמש יוכל לדפדף ביניהם!
 כללים:
 - text: עברית פשוטה
 - highlight: מערך ריבועים או[]
@@ -1189,7 +1275,7 @@ function renderActiveChat() {
     
     if(currentChatMsgs.length === 0) {
         const d = document.createElement('div'); d.className='cmsg ai';
-        d.innerHTML='שלום! אני המאמן שלך 👋<br>אני זוכר את רמת המשחק שלך ואת מה שנדבר עליו. שאל אותי הכל!';
+        d.innerHTML='שלום! אני המאמן שלך 👋<br>אני זוכר את ההיסטוריה שלך במשחקים ובצ\'אט. איך אפשר לעזור?';
         msgs.appendChild(d);
     } else {
         currentChatMsgs.forEach(m => {
@@ -1249,23 +1335,16 @@ async function chatAsk(msg){
   
   const ctx=started?`מצב לוח נוכחי במשחק (FEN): ${game.fen()}\nהיסטוריית מהלכים נוכחית: ${game.pgn()||'טרם התחיל'}`:'(אין משחק פעיל ברקע כרגע)';
   
-  // Building the comprehensive payload to remember history
   let aiContents =[];
+  const userProfile = `[הנחיות מערכת בלבד: אתה מאמן שחמט מנוסה בעברית. נתוני השחקן מולך: ${stats.g} משחקים שוחקו, ${stats.w} ניצחונות, ${stats.l} הפסדים, ${stats.d} תיקו. רצף נוכחי: ${stats.s}. התאם את ההסברים והמשימות שלך לרמת השחקן! אזהרה חמורה: אל תמליץ לעולם על מהלכים לא חוקיים! הנה הלוח: ${ctx}. חשוב: כדי להדגים משהו, הוסף תמיד בסוף התשובה בלוק JSON בפורמט: BOARD_DEMO:[{"title":"שלב 1","text":"הסבר","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]END_DEMO. הקפד להחזיר מערך של מספר שלבים אם יש יותר ממהלך אחד!]`;
   
-  // Inject the System Context (User Profile) into the first message secretly
-  const userProfile = `[הנחיות מערכת בלבד: אתה מאמן שחמט מנוסה בעברית. נתוני השחקן מולך: ${stats.g} משחקים שוחקו, ${stats.w} ניצחונות, ${stats.l} הפסדים, ${stats.d} תיקו. רצף נוכחי: ${stats.s}. התאם את ההסברים והמשימות שלך לרמת השחקן המשתקפת מהנתונים! הנה מצב הלוח הנוכחי לעזרתך: ${ctx}. חשוב: אם תרצה להדגים משהו (טקטיקה/חידה/מהלך), הוסף תמיד בסוף התשובה בלוק JSON בפורמט הזה בדיוק: BOARD_DEMO:[{"title":"שלב 1","text":"הסבר","highlight":["e4"],"arrows":[{"from":"e2","to":"e4","color":"orange"}]}]END_DEMO. הקפד להחזיר מערך של מספר שלבים אם יש יותר ממהלך אחד ברצף!]`;
-  
-  // Add history to context
   for(let i=0; i < currentChatMsgs.length; i++) {
       let m = currentChatMsgs[i];
       let txt = m.text;
-      if(i === 0 && m.role === 'user') txt = userProfile + "\n\nבקשת המשתמש: " + txt; // prepending system prompt
+      if(i === 0 && m.role === 'user') txt = userProfile + "\n\nבקשת המשתמש: " + txt; 
       if(m.demo) txt += "\n[הוצגה הדגמה ויזואלית על הלוח]";
       
-      // Ensure alternating roles for Gemini API (user, model, user, model)
       const r = m.role === 'ai' ? 'model' : 'user';
-      
-      // If same role in a row (e.g. error handling), combine them to avoid API 400 error
       if(aiContents.length > 0 && aiContents[aiContents.length-1].role === r) {
           aiContents[aiContents.length-1].parts[0].text += "\n\n" + txt;
       } else {

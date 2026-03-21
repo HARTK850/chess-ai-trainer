@@ -117,8 +117,8 @@ header{
 .sq.chk{background:#ff4444!important}
 .sq.xsq{background:rgba(124,108,250,.3)!important;box-shadow:inset 0 0 0 3px rgba(124,108,250,.8)!important}
 .sq.tut{background:rgba(240,180,41,.3)!important;box-shadow:inset 0 0 0 3px rgba(240,180,41,.9)!important}
-.piece{width:86%;height:86%;display:block;transition:transform .12s ease;user-select:none;pointer-events:none}
-.sq:not(.sel):hover .piece{transform:scale(1.12) translateY(-2px)}
+.piece{width:86%;height:86%;display:block;transition:transform .12s ease;user-select:none;pointer-events:none;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+.sq:not(.sel):hover .piece{transform:scale(1.1) translateY(-2px)}
 
 /* ═══ EVAL BAR ═══ */
 .evalwrap{display:flex;flex-direction:column;align-items:center;gap:3px;margin-right:8px;flex-shrink:0}
@@ -315,7 +315,14 @@ header{
 
 /* FULLSCREEN */
 body.fs-mode .spanel{display:none}
-body.fs-mode .bsec{padding:10px 8px}
+body.fs-mode .app{overflow-y:auto}
+body.fs-mode .bsec{
+  padding:10px 8px 20px;
+  overflow-y:auto;
+  overflow-x:hidden;
+  justify-content:flex-start;
+  min-height:calc(100vh - 56px);
+}
 #fsAnal{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:linear-gradient(to top,rgba(5,8,15,.98) 0%,rgba(5,8,15,.85) 80%,transparent 100%);padding:12px 24px 16px;max-height:36vh;overflow-y:auto}
 #fsAnal .inner{max-width:800px;margin:0 auto}
 
@@ -771,29 +778,42 @@ function setLang(l){
 }
 
 // ═══════════════════════════════════════
-// PIECE SVGs (clean, no crosses)
+// PIECE IMAGES — Wikipedia/Wikimedia standard chess pieces
+// These are the exact same pieces used by lichess.org
+// Clean, professional, no crosses, no diamonds
 // ═══════════════════════════════════════
-const PP={
-  P:`<ellipse cx="22.5" cy="27" rx="5" ry="7"/><circle cx="22.5" cy="17" r="4"/><rect x="15" y="33" width="15" height="3" rx="1.5"/>`,
-  N:`<path d="M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18"/><path d="M24,18c.6,0,1,.4,1,1s-.4,1-1,1-1-.4-1-1,.4-1,1-1z" fill-opacity=".3"/><rect x="14" y="38" width="17" height="2" rx="1"/>`,
-  B:`<ellipse cx="22.5" cy="22" rx="6" ry="10"/><circle cx="22.5" cy="11" r="3.5"/><rect x="14" y="31" width="17" height="2" rx="1"/>`,
-  R:`<rect x="13" y="14" width="19" height="24" rx="2"/><rect x="11" y="10" width="5" height="6" rx="1"/><rect x="20" y="10" width="5" height="6" rx="1"/><rect x="29" y="10" width="5" height="6" rx="1"/><rect x="11" y="37" width="23" height="3" rx="1.5"/>`,
-  Q:`<path d="M9,26 L7,12 L13.5,19 L22.5,9 L31.5,19 L38,12 L36,26 Z"/><rect x="11" y="36" width="23" height="3" rx="1.5"/><rect x="11" y="26" width="23" height="10.5"/>`,
-  K:`<circle cx="22.5" cy="11" r="4"/><path d="M11,38 C13,22 32,22 34,38 Z"/><rect x="11" y="37" width="23" height="3" rx="1.5"/>`
+const PIECE_IMGS = {
+  // White pieces
+  wK: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg',
+  wQ: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg',
+  wR: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
+  wB: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg',
+  wN: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg',
+  wP: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
+  // Black pieces
+  bK: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg',
+  bQ: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg',
+  bR: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg',
+  bB: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg',
+  bN: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg',
+  bP: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg',
 };
-function getPieceSVG(type,color,style,size='100%'){
-  const path=PP[type.toUpperCase()];if(!path)return'';
-  let fill=color==='w'?'var(--pw)':'var(--pb)';
-  let stroke=color==='w'?'#222':'#ddd';
-  let sw=1.2,flt='drop-shadow(0 3px 4px rgba(0,0,0,.55))';
-  if(style==='flat'){sw=0;flt='drop-shadow(0 1px 2px rgba(0,0,0,.35))';}
-  if(style==='neon'){fill='transparent';stroke=color==='w'?'#7c6cfa':'#f0b429';sw=2.5;flt=`drop-shadow(0 0 6px ${stroke})`;}
-  if(style==='minimal'){fill='none';stroke=color==='w'?'var(--pw)':'var(--pb)';sw=2.8;flt='none';}
-  if(style==='glass'){fill=color==='w'?'rgba(255,255,255,.45)':'rgba(0,0,0,.55)';stroke=color==='w'?'#fff':'#555';sw=1.5;flt='drop-shadow(0 6px 10px rgba(0,0,0,.65))';}
-  return`<svg viewBox="0 0 45 45" width="${size}" height="${size}" style="display:inline-block;filter:${flt};overflow:visible"><g fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round">${path}</g></svg>`;
+
+function getPieceImg(type, color, size='88%') {
+  const key = color + type.toUpperCase();
+  const src = PIECE_IMGS[key];
+  if (!src) return '';
+  return `<img src="${src}" style="width:${size};height:${size};display:block;pointer-events:none;user-select:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))" draggable="false" alt="${key}">`;
 }
 
-const PSETS={classic:{name:'קלאסי / Classic',id:'classic'},flat:{name:'שטוח / Flat',id:'flat'},neon:{name:'ניאון / Neon',id:'neon'},glass:{name:'זכוכית / Glass',id:'glass'},minimal:{name:'מינימלי / Minimal',id:'minimal'}};
+// Keep getPieceSVG as alias for backward compat (theme previews etc)
+function getPieceSVG(type, color, style, size='100%') {
+  return getPieceImg(type, color, size);
+}
+
+// Piece sets: now we use real images, so only one set (Wikipedia standard)
+// pset variable is kept for backward compat but only board themes vary
+const PSETS={classic:{name:'ויקיפדיה / Wikipedia',id:'classic'}};
 const BGT=[
   {id:'classic',nm:'Classic',l:'#e8d5b7',d:'#a07040'},
   {id:'tournament',nm:'Tournament',l:'#eeeed2',d:'#769656'},
@@ -839,9 +859,9 @@ let chatsArchive=[],currentChatId=Date.now(),currentChatTitle='Chat',currentChat
 let sfWorker=null,engineReady=false;
 
 // ═══════════════════════════════════════
-// LS
+// LS — STABLE KEYS (never change these!)
 // ═══════════════════════════════════════
-const LSK='cai_k7',LSS='cai_s7',LSP='cai_p7';
+const LSK='chess_ai_keys',LSS='chess_ai_stats',LSP='chess_ai_prefs';
 function saveLS(){
   try{
     localStorage.setItem(LSK,JSON.stringify(apiKeys.filter(k=>k&&k.key).map(k=>k.key)));
@@ -851,6 +871,16 @@ function saveLS(){
 }
 function loadLS(){
   try{
+    // Migrate from any old key versions — check all previous names
+    const OLD_KEYS=['cai_k7','cai_k6','cai_k5','cai_k4','cai_k3'];
+    let migratedKeys=[];
+    OLD_KEYS.forEach(oldK=>{
+      if(!localStorage.getItem(LSK)){
+        const old=localStorage.getItem(oldK);
+        if(old){try{const arr=JSON.parse(old);if(Array.isArray(arr)&&arr.length){migratedKeys=arr;localStorage.setItem(LSK,old);}}catch(e){}}
+      }
+    });
+
     lang=localStorage.getItem('cai_lang')||'he';
     const ks=JSON.parse(localStorage.getItem(LSK)||'[]');ks.forEach(k=>{if(k)addKey(k);});
     const s=JSON.parse(localStorage.getItem(LSS)||'null');if(s)stats={...stats,...s};
@@ -945,15 +975,22 @@ function calcSQ(){
   const hh=document.querySelector('header').offsetHeight;
   const vw=window.innerWidth,vh=window.innerHeight;
   const isMobile=vw<=768;
-  // bottom chrome: status+diff+btns+caprows+gaps
   const bottomChrome=isMobile?190:210;
   const leftChrome=30;
   let aw,ah;
-  if(fsMode){aw=vw-leftChrome-16;ah=vh-hh-bottomChrome+50;}
-  else if(!isMobile){const pw=document.getElementById('spanel').offsetWidth||430;aw=vw-pw-leftChrome-24;ah=vh-hh-bottomChrome;}
-  else{aw=vw-24;ah=vh*0.48;}
+  if(fsMode){
+    // fullscreen: bsec scrolls, so just limit by width and give board max height
+    aw=vw-leftChrome-20;
+    ah=vh-hh-100; // room for just the top/bottom cap rows
+  }else if(!isMobile){
+    const pw=document.getElementById('spanel').offsetWidth||430;
+    aw=vw-pw-leftChrome-24;
+    ah=vh-hh-bottomChrome;
+  }else{
+    aw=vw-24;ah=vh*0.48;
+  }
   SQ=Math.floor(Math.min(aw,ah)/8);
-  SQ=Math.max(36,Math.min(SQ,96));
+  SQ=Math.max(36,Math.min(SQ,100));
 }
 
 // ═══════════════════════════════════════
@@ -1001,7 +1038,18 @@ function renderBoard(instance=game){
     const id=sqAlg(r,c),el=document.getElementById('sq_'+id);if(!el)continue;
     const fi=id.charCodeAt(0)-97,ri=parseInt(id[1])-1,p=pos[7-ri][fi];
     el.innerHTML='';
-    if(p){const w=document.createElement('div');w.className='piece';w.innerHTML=getPieceSVG(p.type,p.color,pset);el.appendChild(w);}
+    if(p){
+      const key=p.color+p.type.toUpperCase();
+      const src=PIECE_IMGS[key];
+      if(src){
+        const img=document.createElement('img');
+        img.src=src;
+        img.className='piece';
+        img.draggable=false;
+        img.alt=key;
+        el.appendChild(img);
+      }
+    }
   }
   if(instance.in_check()){const ks=findKing(instance.turn(),instance);if(ks)document.getElementById('sq_'+ks)?.classList.add('chk');}
   if(instance===game){if(lastF)document.getElementById('sq_'+lastF)?.classList.add('hl-f');if(lastT)document.getElementById('sq_'+lastT)?.classList.add('hl-t');}
@@ -1098,7 +1146,7 @@ const PV={p:1,n:3,b:3,r:5,q:9,k:0};
 function updCap(){
   const hist=game.history({verbose:true}),cW=[],cB=[];let sW=0,sB=0;
   hist.forEach(m=>{if(m.captured){if(m.color==='w'){cW.push({c:'b',t:m.captured});sW+=PV[m.captured];}else{cB.push({c:'w',t:m.captured});sB+=PV[m.captured];}}});
-  const fmt=arr=>arr.map(p=>`<div class="cap-piece">${getPieceSVG(p.t,p.c,pset,'100%')}</div>`).join('');
+  const fmt=arr=>arr.map(p=>{const key=p.c+p.t.toUpperCase();const src=PIECE_IMGS[key]||'';return src?`<img src="${src}" class="cap-piece" draggable="false" alt="${key}" style="width:20px;height:20px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.5))">`:'';}).join('');
   document.getElementById('capWhite').innerHTML=fmt(cW);document.getElementById('capBlack').innerHTML=fmt(cB);
   const diff=sW-sB;document.getElementById('sWhite').textContent=diff>0?'+'+diff:'';document.getElementById('sBlack').textContent=diff<0?'+'+Math.abs(diff):'';
 }
@@ -1403,9 +1451,13 @@ function tab(name){
 // ═══════════════════════════════════════
 function buildThUI(){
   const bg=document.getElementById('bgthemes');BGT.forEach(t=>{const d=document.createElement('div');d.className='tsw';d.id='bt_'+t.id;d.title=t.nm;d.onclick=()=>applyBG(t.id);d.innerHTML='<div class="swb"><div style="background:'+t.l+'"></div><div style="background:'+t.d+'"></div><div style="background:'+t.d+'"></div><div style="background:'+t.l+'"></div></div>';bg.appendChild(d);});
-  const ps=document.getElementById('psgrid');Object.entries(PSETS).forEach(([id,set])=>{const d=document.createElement('div');d.className='pscard';d.id='ps_'+id;d.onclick=()=>applyPS(id);d.innerHTML='<div class="psprev">'+getPieceSVG('K','w',id,'32px')+getPieceSVG('N','b',id,'26px')+'</div><div class="psname">'+set.name+'</div>';ps.appendChild(d);});
-  const wc=document.getElementById('wpcol');WPC.forEach(c=>{const b=document.createElement('div');b.id='wp_'+c.id;b.title=c.l;b.style.cssText='width:26px;height:26px;border-radius:6px;background:'+c.v+';cursor:pointer;border:2px solid var(--brd2);box-shadow:0 2px 6px rgba(0,0,0,.5)';b.onclick=()=>applyPC('w',c.id);wc.appendChild(b);});
-  const bc=document.getElementById('bpcol');BPC.forEach(c=>{const b=document.createElement('div');b.id='bp_'+c.id;b.title=c.l;b.style.cssText='width:26px;height:26px;border-radius:6px;background:'+c.v+';cursor:pointer;border:2px solid var(--brd2);box-shadow:0 2px 6px rgba(0,0,0,.5)';b.onclick=()=>applyPC('b',c.id);bc.appendChild(b);});
+  // Piece preview with real images
+  const ps=document.getElementById('psgrid');ps.innerHTML='';
+  const d=document.createElement('div');d.className='pscard active';d.id='ps_classic';
+  d.innerHTML='<div class="psprev"><img src="'+PIECE_IMGS.wK+'" style="height:36px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))" draggable="false"><img src="'+PIECE_IMGS.bN+'" style="height:30px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))" draggable="false"></div><div class="psname">Wikipedia Standard</div>';
+  ps.appendChild(d);
+  const wc=document.getElementById('wpcol');wc.innerHTML='';WPC.forEach(c=>{const b=document.createElement('div');b.id='wp_'+c.id;b.title=c.l;b.style.cssText='width:26px;height:26px;border-radius:6px;background:'+c.v+';cursor:pointer;border:2px solid var(--brd2);box-shadow:0 2px 6px rgba(0,0,0,.5)';b.onclick=()=>applyPC('w',c.id);wc.appendChild(b);});
+  const bc=document.getElementById('bpcol');bc.innerHTML='';BPC.forEach(c=>{const b=document.createElement('div');b.id='bp_'+c.id;b.title=c.l;b.style.cssText='width:26px;height:26px;border-radius:6px;background:'+c.v+';cursor:pointer;border:2px solid var(--brd2);box-shadow:0 2px 6px rgba(0,0,0,.5)';b.onclick=()=>applyPC('b',c.id);bc.appendChild(b);});
 }
 function applyBG(id){const t=BGT.find(x=>x.id===id);if(!t)return;bgtheme=id;document.documentElement.style.setProperty('--sq-l',t.l);document.documentElement.style.setProperty('--sq-d',t.d);document.querySelectorAll('.tsw').forEach(e=>e.classList.remove('active'));document.getElementById('bt_'+id)?.classList.add('active');saveLS();}
 function applyPS(id){pset=id;document.querySelectorAll('.pscard').forEach(e=>e.classList.remove('active'));document.getElementById('ps_'+id)?.classList.add('active');renderBoard();updCap();saveLS();}
